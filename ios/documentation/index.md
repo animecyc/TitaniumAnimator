@@ -81,3 +81,22 @@ The below easing functions can be accessed as you would any other Titanium const
 * BOUNCE_IN
 * BOUNCE_OUT
 * BOUNCE_IN_OUT
+
+## [TiDraggable](https://github.com/animecyc/TiDraggable) Support
+
+If the view you're animating is a view touched by [TiDraggable](https://github.com/animecyc/TiDraggable) module you can perform a tandem animation; All attached proxies will be animated at the same time within the supplied constraints.
+
+```javascript
+Animator.animate(animationView, {
+	duration : 1000,
+	easing : Animator.BOUNCE_OUT,
+	left : 250,
+	draggable : {
+		x : 'end'
+	}
+});
+```
+
+Given the above usage example, if the view being animated has views "attached" to it, via the `maps` declaration, you can have them animate their position into place as if it were being panned. This creates a fluid expirience for situations where you need to have both drag and drop support and animations between multiple related views.
+
+Both `draggable` property axes (x & y) support the use of either a string representing the key used for the axis constraint on the draggable configuration or an integer for custom arrangements.
