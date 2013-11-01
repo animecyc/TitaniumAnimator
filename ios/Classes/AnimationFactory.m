@@ -269,7 +269,7 @@ layoutProperties->prop = TiDimensionFromObject(prop);\
             return ElasticEaseIn;
             break;
         case EASING_ELASTIC_OUT:
-            return (ViewEasingFunctionPointerType)ElasticEaseOut;
+            return ElasticEaseOut;
             break;
         case EASING_ELASTIC_IN_OUT:
             return ElasticEaseInOut;
