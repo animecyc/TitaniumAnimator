@@ -1,4 +1,4 @@
-# TitaniumBrightcove
+# TitaniumAnimator
 
 A drop-in animation replacement for Titanium. This module's aim is to mimick as much of the Titanium animation module as possible with the addition of new timing functions and better performance. As of right now the only properties that can be animated are: `top`, `bottom`, `left`, `right`, `width`, `height`, `opacity`, and `backgroundColor`.
 
