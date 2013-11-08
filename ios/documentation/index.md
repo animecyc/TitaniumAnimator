@@ -1,6 +1,12 @@
 # TitaniumAnimator
 
-A drop-in animation replacement for Titanium. This module's aim is to mimick as much of the Titanium animation module as possible with the addition of new timing functions and better performance. As of right now the only properties that can be animated are: `top`, `bottom`, `left`, `right`, `width`, `height`, `opacity`, and `backgroundColor`.
+A drop-in animation replacement for Titanium. This module's aim is to mimick as much of the Titanium animation module as possible with the addition of new timing functions and better performance. As of right now the only properties that can be animated are: `rotate`, `transform`, `top`, `bottom`, `left`, `right`, `width`, `height`, `opacity`, `color` and `backgroundColor`.
+
+## Rotations
+
+If you need to perform a rotation you can pass the `rotate` property which accepts a float. The `rotate` property is the angle you wish to rotate to; A positive value will result in a counter-clockwise rotation, while a negative value will result in a clockwise rotation.
+
+Once a rotation has been performed subsequent rotations will be performed from its last rotation angle. To simplify multiple rotations you can pass values > 360. For example to do two complete rotations you can pass a value of 720.
 
 ## Support
 
