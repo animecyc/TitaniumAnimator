@@ -54,9 +54,6 @@ enum {
 typedef NSInteger AnimationEasingType;
 
 @interface AnimationFactory : NSObject
-{
-    int animationsCompleted;
-}
 
 - (void)animateUsingProxy:(TiViewProxy*)proxy andProperties:(NSDictionary*)properties completed:(KrollCallback*)completed;
 

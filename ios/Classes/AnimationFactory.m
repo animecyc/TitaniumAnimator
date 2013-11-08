@@ -20,8 +20,11 @@
 #import "KrollCallback.h"
 #import "UIView+EasingFunctions.h"
 #import "CAKeyframeAnimation+AHEasing.h"
+#import "TiUILabel.h"
 
 @implementation AnimationFactory
+
+typedef void (^ CallbackBlock)(void);
 
 #define ENSURE_LAYOUT_PROPERTY(prop)\
 {\
@@ -40,6 +43,9 @@ layoutProperties->prop = TiDimensionFromObject(prop);\
     NSNumber* width = [properties objectForKey:@"width"];
     NSNumber* height = [properties objectForKey:@"height"];
     NSNumber* opacity = [properties objectForKey:@"opacity"];
+    NSNumber* rotate = [properties objectForKey:@"rotate"];
+    TiProxy* transform = [properties objectForKey:@"transform"];
+    TiColor* color = [TiUtils colorValue:[properties objectForKey:@"color"]];
     TiColor* backgroundColor = [TiUtils colorValue:[properties objectForKey:@"backgroundColor"]];
     NSNumber* duration = [properties objectForKey:@"duration"];
     NSNumber* easing = [properties objectForKey:@"easing"];
@@ -55,76 +61,123 @@ layoutProperties->prop = TiDimensionFromObject(prop);\
     }
 
     double duration_ = [duration doubleValue] / 1000;
-
-    __block int totalAnimations = 0;
-
-    void (^animationComplete)(void) = ^{
-        if (completed && ++animationsCompleted == totalAnimations)
+    AHEasingFunction easingFunc = [self getEasingFunc:easing];
+    
+    if (rotate)
+    {
+        double rotateFrom = degreesToRadians([[proxy valueForKey:@"__rotation"] floatValue]);
+        double rotateTo = rotateFrom + degreesToRadians([rotate floatValue]);
+        
+        [CATransaction begin];
+        [CATransaction setValue:[NSNumber numberWithDouble:duration_] forKey:kCATransactionAnimationDuration];
+        
+        CAKeyframeAnimation* rotateAnimation = [CAKeyframeAnimation animationWithKeyPath:@"transform.rotation.z"
+                                                                                function:easingFunc
+                                                                               fromValue:rotateFrom
+                                                                                 toValue:rotateTo];
+        
+        [proxy.view.layer addAnimation:rotateAnimation forKey:@"rotation"];
+        
+        [CATransaction commit];
+        
+        if (fmodf(radiansToDegrees(rotateTo), 360) == 0)
         {
-            animationsCompleted = 0;
-
+            [proxy setValue:[NSNumber numberWithInteger:0] forKey:@"__rotation"];
+        }
+        else
+        {
+            [proxy setValue:[NSNumber numberWithDouble:radiansToDegrees(rotateTo)] forKey:@"__rotation"];
+        }
+        
+        [proxy.view setVirtualParentTransform:CGAffineTransformRotate([proxy.view transform], rotateTo - rotateFrom)];
+    }
+    
+    // If the label being animated has an appropriate CATextLayer
+    // attached to it and responds to the setTextColor the below
+    // should animate as expected. At this time there is no support
+    // for any of the easing functions
+    
+    if (color)
+    {
+        [CATransaction begin];
+        [CATransaction setValue:[NSNumber numberWithDouble:duration_] forKey:kCATransactionAnimationDuration];
+        
+        [proxy setValue:color forKey:@"color"];
+        
+        [CATransaction commit];
+    }
+    
+    if (transform || top || left || bottom || right || width || height || opacity || backgroundColor || color)
+    {
+        [UIView animateWithDuration:duration_ animations:^{
+            if (transform)
+            {
+                [proxy.view setEasingFunction:easingFunc forKeyPath:@"transform"];
+                [proxy.view setTransform_:transform];
+            }
+            
+            if (top || left || bottom || right || width || height)
+            {
+                [proxy.view setEasingFunction:easingFunc forKeyPath:@"frame"];
+                
+                LayoutConstraint* layoutProperties = [proxy layoutProperties];
+                
+                ENSURE_LAYOUT_PROPERTY(left);
+                ENSURE_LAYOUT_PROPERTY(right);
+                ENSURE_LAYOUT_PROPERTY(top);
+                ENSURE_LAYOUT_PROPERTY(bottom);
+                ENSURE_LAYOUT_PROPERTY(width);
+                ENSURE_LAYOUT_PROPERTY(height);
+                
+                [proxy reposition];
+            }
+            
+            if (opacity)
+            {
+                [proxy.view setEasingFunction:easingFunc forKeyPath:@"alpha"];
+                [proxy setValue:opacity forKey:@"opacity"];
+            }
+            
+            if (backgroundColor)
+            {
+                [proxy.view setEasingFunction:easingFunc forKeyPath:@"backgroundColor"];
+                [proxy setValue:backgroundColor forKey:@"backgroundColor"];
+            }
+        }];
+    }
+    
+    // Mixing the explicit CATransaction and the implcit UIView animation
+    // causes issues with their respective completion block; To ensure the
+    // callback is called everytime regardless of animation properties
+    // we'll just delay the execution for `duration_` seconds
+    
+    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, duration_ * NSEC_PER_SEC), dispatch_get_main_queue(), ^(void){
+        if (top || left || bottom || right || width || height)
+        {
+            [proxy.view removeEasingFunctionForKeyPath:@"frame"];
+        }
+        
+        if (transform)
+        {
+            [proxy.view removeEasingFunctionForKeyPath:@"transform"];
+        }
+        
+        if (opacity)
+        {
+            [proxy.view removeEasingFunctionForKeyPath:@"alpha"];
+        }
+        
+        if (backgroundColor)
+        {
+            [proxy.view removeEasingFunctionForKeyPath:@"backgroundColor"];
+        }
+        
+        if (completed)
+        {
             [proxy _fireEventToListener:@"animated" withObject:nil listener:completed thisObject:proxy];
         }
-    };
-
-    if (top || left || bottom || right || width || height)
-    {
-        totalAnimations++;
-
-        [UIView animateWithDuration:duration_
-                         animations:^{
-                             [proxy.view setEasingFunction:[self getEasingFunc:easing] forKeyPath:@"frame"];
-
-                             LayoutConstraint* layoutProperties = [proxy layoutProperties];
-
-                             ENSURE_LAYOUT_PROPERTY(left);
-                             ENSURE_LAYOUT_PROPERTY(right);
-                             ENSURE_LAYOUT_PROPERTY(top);
-                             ENSURE_LAYOUT_PROPERTY(bottom);
-                             ENSURE_LAYOUT_PROPERTY(width);
-                             ENSURE_LAYOUT_PROPERTY(height);
-
-                             [proxy reposition];
-                         }
-                         completion:^(BOOL finished) {
-                             [proxy.view removeEasingFunctionForKeyPath:@"frame"];
-
-                             animationComplete();
-                         }];
-    }
-
-    if (opacity)
-    {
-        totalAnimations++;
-
-        [UIView animateWithDuration:duration_
-                         animations:^{
-                             [proxy.view setEasingFunction:[self getEasingFunc:easing] forKeyPath:@"alpha"];
-                             [proxy setValue:opacity forKey:@"opacity"];
-                         }
-                         completion:^(BOOL finished) {
-                             [proxy.view removeEasingFunctionForKeyPath:@"alpha"];
-
-                             animationComplete();
-                         }];
-    }
-
-    if (backgroundColor)
-    {
-        totalAnimations++;
-
-        [UIView animateWithDuration:duration_
-                         animations:^{
-                             [proxy.view setEasingFunction:[self getEasingFunc:easing] forKeyPath:@"backgroundColor"];
-                             [proxy setValue:backgroundColor forKey:@"backgroundColor"];
-                         }
-                         completion:^(BOOL finished) {
-                             [proxy.view removeEasingFunctionForKeyPath:@"backgroundColor"];
-
-                             animationComplete();
-                         }];
-    }
-
+    });
+    
     if ([[properties objectForKey:@"draggable"] isKindOfClass:[NSDictionary class]])
     {
         [self animateDraggable:proxy
@@ -199,7 +252,7 @@ layoutProperties->prop = TiDimensionFromObject(prop);\
     }
 }
 
-- (ViewEasingFunctionPointerType)getEasingFunc:(NSNumber*)easingType
+- (AHEasingFunction)getEasingFunc:(NSNumber*)easingType
 {
     switch ([easingType integerValue]) {
         case EASING_QUAD_IN:

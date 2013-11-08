@@ -22,7 +22,8 @@
 
     var Animator = require('com.animecyc.animator'),
         mainWindow = Ti.UI.createWindow({
-            fullscreen : true
+            fullscreen : true,
+            backgroundColor : 'white'
         }),
         viewToAnimate = Ti.UI.createView({
             height : 100,
@@ -37,45 +38,40 @@
             height : 100,
             bottom : 0,
             backgroundColor : 'white'
-        }),
-        createRow = function (title) {
-            return Ti.UI.createPickerRow({
-                title : title
-            });
-        };
+        });
 
     easeSelect.add([
-        createRow('LINEAR'),
-        createRow('QUAD_IN'),
-        createRow('QUAD_OUT'),
-        createRow('QUAD_IN_OUT'),
-        createRow('CUBIC_IN'),
-        createRow('CUBIC_OUT'),
-        createRow('CUBIC_IN_OUT'),
-        createRow('QUART_IN'),
-        createRow('QUART_OUT'),
-        createRow('QUART_IN_OUT'),
-        createRow('QUINT_IN'),
-        createRow('QUINT_OUT'),
-        createRow('QUINT_IN_OUT'),
-        createRow('SINE_IN'),
-        createRow('SINE_OUT'),
-        createRow('SINE_IN_OUT'),
-        createRow('CIRC_IN'),
-        createRow('CIRC_OUT'),
-        createRow('CIRC_IN_OUT'),
-        createRow('EXP_IN'),
-        createRow('EXP_OUT'),
-        createRow('EXP_IN_OUT'),
-        createRow('ELASTIC_IN'),
-        createRow('ELASTIC_OUT'),
-        createRow('ELASTIC_IN_OUT'),
-        createRow('BACK_IN'),
-        createRow('BACK_OUT'),
-        createRow('BACK_IN_OUT'),
-        createRow('BOUNCE_IN'),
-        createRow('BOUNCE_OUT'),
-        createRow('BOUNCE_IN_OUT')
+        Ti.UI.createPickerRow({ title : 'LINEAR' }),
+        Ti.UI.createPickerRow({ title : 'QUAD_IN' }),
+        Ti.UI.createPickerRow({ title : 'QUAD_OUT' }),
+        Ti.UI.createPickerRow({ title : 'QUAD_IN_OUT' }),
+        Ti.UI.createPickerRow({ title : 'CUBIC_IN' }),
+        Ti.UI.createPickerRow({ title : 'CUBIC_OUT' }),
+        Ti.UI.createPickerRow({ title : 'CUBIC_IN_OUT' }),
+        Ti.UI.createPickerRow({ title : 'QUART_IN' }),
+        Ti.UI.createPickerRow({ title : 'QUART_OUT' }),
+        Ti.UI.createPickerRow({ title : 'QUART_IN_OUT' }),
+        Ti.UI.createPickerRow({ title : 'QUINT_IN' }),
+        Ti.UI.createPickerRow({ title : 'QUINT_OUT' }),
+        Ti.UI.createPickerRow({ title : 'QUINT_IN_OUT' }),
+        Ti.UI.createPickerRow({ title : 'SINE_IN' }),
+        Ti.UI.createPickerRow({ title : 'SINE_OUT' }),
+        Ti.UI.createPickerRow({ title : 'SINE_IN_OUT' }),
+        Ti.UI.createPickerRow({ title : 'CIRC_IN' }),
+        Ti.UI.createPickerRow({ title : 'CIRC_OUT' }),
+        Ti.UI.createPickerRow({ title : 'CIRC_IN_OUT' }),
+        Ti.UI.createPickerRow({ title : 'EXP_IN' }),
+        Ti.UI.createPickerRow({ title : 'EXP_OUT' }),
+        Ti.UI.createPickerRow({ title : 'EXP_IN_OUT' }),
+        Ti.UI.createPickerRow({ title : 'ELASTIC_IN' }),
+        Ti.UI.createPickerRow({ title : 'ELASTIC_OUT' }),
+        Ti.UI.createPickerRow({ title : 'ELASTIC_IN_OUT' }),
+        Ti.UI.createPickerRow({ title : 'BACK_IN' }),
+        Ti.UI.createPickerRow({ title : 'BACK_OUT' }),
+        Ti.UI.createPickerRow({ title : 'BACK_IN_OUT' }),
+        Ti.UI.createPickerRow({ title : 'BOUNCE_IN' }),
+        Ti.UI.createPickerRow({ title : 'BOUNCE_OUT' }),
+        Ti.UI.createPickerRow({ title : 'BOUNCE_IN_OUT' }),
     ]);
 
     easeSelect.addEventListener('change', function (e) {
@@ -84,16 +80,20 @@
 
     viewToAnimate.addEventListener('singletap', function () {
         Animator.animate(viewToAnimate, {
+            rotate : 180,
             backgroundColor : 'green',
-            top : Ti.Platform.displayCaps.platformHeight - 200,
+            top : Ti.Platform.displayCaps.platformHeight - 199,
             width : "50%",
+            opacity : 0.5,
             duration : 500,
             easing : easingMethod
         }, function () {
             Animator.animate(viewToAnimate, {
+                rotate : 180,
                 backgroundColor : 'red',
                 top : 0,
                 width : null,
+                opacity : 1,
                 duration : 500,
                 easing : easingMethod
             });
@@ -101,6 +101,11 @@
     });
 
     easeSelectView.add(easeSelect);
+    mainWindow.add(Ti.UI.createView({
+        height : 1,
+        backgroundColor : '#A5A5A5',
+        bottom : 100
+    }));
     mainWindow.add(easeSelectView);
     mainWindow.add(viewToAnimate);
     mainWindow.open();
