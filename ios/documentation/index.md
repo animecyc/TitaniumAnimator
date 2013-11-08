@@ -8,6 +8,28 @@ If you need to perform a rotation you can pass the `rotate` property which accep
 
 Once a rotation has been performed subsequent rotations will be performed from its last rotation angle. To simplify multiple rotations you can pass values > 360. For example to do two complete rotations you can pass a value of 720.
 
+## Ti.UI.Label Color
+
+In order to animate the text color of a Ti.UI.Label you must use a compatiable label replacement. You can get a simple version here: [TitaniumCoreLabel](https://github.com/animecyc/TitaniumCoreLabel).
+
+```javascript
+var CoreLabel = require('com.animecyc.corelabel'),
+	Animator = require('com.animecyc.animator'),
+	testLabel = CoreLabel.createLabel({
+		color : 'black',
+		font : {
+			fontSize : 15
+		}
+	});
+
+Animator.animate(testLabel, {
+	color : 'blue',
+	duration : 500
+});
+```
+
+> The only property that can be animated on a label created via CoreLabel is the `color` property. The `font` property is forthcoming.
+
 ## Support
 
 * iOS: iOS6+
