@@ -20,6 +20,7 @@
 #import "KrollCallback.h"
 #import "UIView+EasingFunctions.h"
 #import "CAKeyframeAnimation+AHEasing.h"
+#import "TiUIScrollViewProxy.h"
 
 @implementation AnimationFactory
 
@@ -48,7 +49,7 @@ layoutProperties->prop = TiDimensionFromObject(prop);\
     TiColor* backgroundColor = [TiUtils colorValue:[properties objectForKey:@"backgroundColor"]];
     NSNumber* duration = [properties objectForKey:@"duration"];
     NSNumber* easing = [properties objectForKey:@"easing"];
-    NSNumber* animateSiblings = [properties objectForKey:@"siblings"];
+    NSNumber* animateSiblings = [TiUtils boolValue:[properties objectForKey:@"siblings"] def:NO];
 
     if (duration == nil)
     {
@@ -128,7 +129,7 @@ layoutProperties->prop = TiDimensionFromObject(prop);\
                 ENSURE_LAYOUT_PROPERTY(bottom);
                 ENSURE_LAYOUT_PROPERTY(width);
                 ENSURE_LAYOUT_PROPERTY(height);
-
+                
                 if (animateSiblings)
                 {
                     [proxy.parent.children enumerateObjectsUsingBlock:^(id obj, NSUInteger idx, BOOL *stop) {
@@ -139,8 +140,16 @@ layoutProperties->prop = TiDimensionFromObject(prop);\
                             [sibling.view setEasingFunction:easingFunc forKeyPath:@"position"];
                         }
                     }];
-
-                    [proxy.parent layoutChildren:NO];
+                    
+                    if ([proxy.parent isKindOfClass:[TiUIScrollViewProxy class]])
+                    {
+                        [(TiUIScrollViewProxy*)proxy.parent layoutChildrenAfterContentSize:NO];
+                        [proxy.parent contentsWillChange];
+                    }
+                    else
+                    {
+                        [proxy.parent layoutChildren:NO];
+                    }
                 }
                 else
                 {
@@ -170,7 +179,18 @@ layoutProperties->prop = TiDimensionFromObject(prop);\
     dispatch_after(dispatch_time(DISPATCH_TIME_NOW, duration_ * NSEC_PER_SEC), dispatch_get_main_queue(), ^(void){
         if (top || left || bottom || right || width || height)
         {
-            [proxy.view removeEasingFunctionForKeyPath:@"frame"];
+            [proxy.parent.children enumerateObjectsUsingBlock:^(id obj, NSUInteger idx, BOOL *stop) {
+                TiViewProxy* sibling = (TiViewProxy*)obj;
+                
+                if (! [proxy isEqual:sibling])
+                {
+                    [sibling.view removeEasingFunctionForKeyPath:@"position"];
+                }
+                else
+                {
+                    [sibling.view removeEasingFunctionForKeyPath:@"frame"];
+                }
+            }];
         }
 
         if (transform)
