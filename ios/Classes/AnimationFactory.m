@@ -65,23 +65,59 @@ layoutProperties->prop = TiDimensionFromObject(prop);\
 
     double duration_ = [duration doubleValue] / 1000;
     AHEasingFunction easingFunc = [self getEasingFunc:easing];
-
+    
+    [CATransaction begin];
+    [CATransaction setValue:[NSNumber numberWithDouble:duration_] forKey:kCATransactionAnimationDuration];
+    [CATransaction setCompletionBlock:^{
+        if (top || left || bottom || right || width || height)
+        {
+            [proxy.parent.children enumerateObjectsUsingBlock:^(id obj, NSUInteger idx, BOOL *stop) {
+                TiViewProxy* sibling = (TiViewProxy*)obj;
+                
+                if (! [proxy isEqual:sibling])
+                {
+                    [sibling.view removeEasingFunctionForKeyPath:@"position"];
+                }
+                else
+                {
+                    [sibling.view removeEasingFunctionForKeyPath:@"frame"];
+                }
+            }];
+        }
+        
+        if (transform)
+        {
+            [proxy.view removeEasingFunctionForKeyPath:@"transform"];
+        }
+        
+        if (opacity)
+        {
+            [proxy.view removeEasingFunctionForKeyPath:@"alpha"];
+        }
+        
+        if (backgroundColor)
+        {
+            [proxy.view removeEasingFunctionForKeyPath:@"backgroundColor"];
+        }
+        
+        if (completed)
+        {
+            [proxy _fireEventToListener:@"animated" withObject:nil listener:completed thisObject:proxy];
+        }
+    }];
+    
     if (rotate)
     {
         double rotateFrom = degreesToRadians([[proxy valueForKey:@"__rotation"] floatValue]);
         double rotateTo = rotateFrom + degreesToRadians([rotate floatValue]);
-
-        [CATransaction begin];
-        [CATransaction setValue:[NSNumber numberWithDouble:duration_] forKey:kCATransactionAnimationDuration];
-
+        
         CAKeyframeAnimation* rotateAnimation = [CAKeyframeAnimation animationWithKeyPath:@"transform.rotation.z"
                                                                                 function:easingFunc
                                                                                fromValue:rotateFrom
                                                                                  toValue:rotateTo];
-
+        
+        rotateAnimation.duration = duration_;
         [proxy.view.layer addAnimation:rotateAnimation forKey:@"rotation"];
-
-        [CATransaction commit];
 
         if (fmodf(radiansToDegrees(rotateTo), 360) == 0)
         {
@@ -102,12 +138,9 @@ layoutProperties->prop = TiDimensionFromObject(prop);\
 
     if (color)
     {
-        [CATransaction begin];
         [CATransaction setValue:[NSNumber numberWithDouble:duration_] forKey:kCATransactionAnimationDuration];
 
         [proxy setValue:color forKey:@"color"];
-
-        [CATransaction commit];
     }
 
     if (transform || top || left || bottom || right || width || height || opacity || backgroundColor || color)
@@ -118,25 +151,25 @@ layoutProperties->prop = TiDimensionFromObject(prop);\
                 [proxy.view setEasingFunction:easingFunc forKeyPath:@"transform"];
                 [proxy.view setTransform_:transform];
             }
-
+            
             if (top || left || bottom || right || width || height)
             {
                 [proxy.view setEasingFunction:easingFunc forKeyPath:@"frame"];
-
+                
                 LayoutConstraint* layoutProperties = [proxy layoutProperties];
-
+                
                 ENSURE_LAYOUT_PROPERTY(left);
                 ENSURE_LAYOUT_PROPERTY(right);
                 ENSURE_LAYOUT_PROPERTY(top);
                 ENSURE_LAYOUT_PROPERTY(bottom);
                 ENSURE_LAYOUT_PROPERTY(width);
                 ENSURE_LAYOUT_PROPERTY(height);
-
+                
                 if (animateSiblings)
                 {
                     [proxy.parent.children enumerateObjectsUsingBlock:^(id obj, NSUInteger idx, BOOL *stop) {
                         TiViewProxy* sibling = (TiViewProxy*)obj;
-
+                        
                         if (! [proxy isEqual:sibling])
                         {
                             [sibling.view setEasingFunction:easingFunc forKeyPath:@"position"];
@@ -206,13 +239,13 @@ layoutProperties->prop = TiDimensionFromObject(prop);\
                     [proxy reposition];
                 }
             }
-
+            
             if (opacity)
             {
                 [proxy.view setEasingFunction:easingFunc forKeyPath:@"alpha"];
                 [proxy setValue:opacity forKey:@"opacity"];
             }
-
+            
             if (backgroundColor)
             {
                 [proxy.view setEasingFunction:easingFunc forKeyPath:@"backgroundColor"];
@@ -220,62 +253,8 @@ layoutProperties->prop = TiDimensionFromObject(prop);\
             }
         }];
     }
-
-    // Mixing the explicit CATransaction and the implcit UIView animation
-    // causes issues with their respective completion block; To ensure the
-    // callback is called everytime regardless of animation properties
-    // we'll just delay the execution for `duration_` seconds
-
-    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, duration_ * NSEC_PER_SEC), dispatch_get_main_queue(), ^(void){
-        if (top || left || bottom || right || width || height)
-        {
-            [proxy.parent.children enumerateObjectsUsingBlock:^(id obj, NSUInteger idx, BOOL *stop) {
-                TiViewProxy* sibling = (TiViewProxy*)obj;
-
-                if (! [proxy isEqual:sibling])
-                {
-                    [sibling.view removeEasingFunctionForKeyPath:@"position"];
-                }
-                else
-                {
-                    [sibling.view removeEasingFunctionForKeyPath:@"frame"];
-                }
-            }];
-
-            // ## BOF: Scrollback Fix
-
-            if ([proxy.parent isKindOfClass:[TiUIScrollViewProxy class]])
-            {
-                TiUIScrollViewProxy* scrollViewProxy = (TiUIScrollViewProxy*)proxy.parent;
-                TiUIScrollView* scrollView = (TiUIScrollView*)scrollViewProxy.view;
-                TiUIScrollViewImpl* scrollViewImpl = [scrollView scrollView];
-
-                [scrollViewImpl removeEasingFunctionForKeyPath:@"bounds"];
-            }
-
-            // ## EOF: Scrollback Fix
-        }
-
-        if (transform)
-        {
-            [proxy.view removeEasingFunctionForKeyPath:@"transform"];
-        }
-
-        if (opacity)
-        {
-            [proxy.view removeEasingFunctionForKeyPath:@"alpha"];
-        }
-
-        if (backgroundColor)
-        {
-            [proxy.view removeEasingFunctionForKeyPath:@"backgroundColor"];
-        }
-
-        if (completed)
-        {
-            [proxy _fireEventToListener:@"animated" withObject:nil listener:completed thisObject:proxy];
-        }
-    });
+    
+    [CATransaction commit];
 
     if ([[properties objectForKey:@"draggable"] isKindOfClass:[NSDictionary class]])
     {
