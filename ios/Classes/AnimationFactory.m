@@ -142,16 +142,63 @@ layoutProperties->prop = TiDimensionFromObject(prop);\
                             [sibling.view setEasingFunction:easingFunc forKeyPath:@"position"];
                         }
                     }];
-                    
-                    
-                    if (! [proxy.parent isKindOfClass:[TiUIScrollViewProxy class]])
+
+                    if ([proxy.parent isKindOfClass:[TiUIScrollViewProxy class]])
                     {
-                        [proxy.parent layoutChildren:NO];
+                        TiUIScrollViewProxy* scrollViewProxy = (TiUIScrollViewProxy*)proxy.parent;
+
+                        [scrollViewProxy layoutChildrenAfterContentSize:NO];
+                        [scrollViewProxy contentsWillChange];
+
+                        TiUIScrollView* scrollView = (TiUIScrollView*)scrollViewProxy.view;
+                        TiUIScrollViewImpl* scrollViewImpl = [scrollView scrollView];
+
+                        CGPoint scrollBack = [self measureScrollBackForScrollViewProxy:scrollViewProxy];
+
+                        [scrollViewImpl setEasingFunction:easingFunc forKeyPath:@"bounds"];
+
+                        if ([scrollViewImpl contentOffset].y >= scrollBack.y)
+                        {
+                            [scrollViewImpl setContentOffset:scrollBack animated:NO];
+                        }
+                        else if ([TiUtils boolValue:[properties objectForKey:@"ensureViewIsVisible"] def:NO])
+                        {
+                            CGRect proxyFrame = proxy.view.frame;
+
+                            float proxyHeight = proxy.view.bounds.size.height;
+                            float scrollY = [scrollViewImpl contentOffset].y;
+                            float proxyCenterY = proxy.view.frame.origin.y;
+                            float yDiff = scrollBack.y - scrollY;
+
+                            if (yDiff <= proxyHeight && proxyCenterY >= scrollY)
+                            {
+                                float yVisibleOffset = (proxyCenterY - proxyHeight / 2) - scrollY;
+
+                                scrollBack.y = scrollY + yDiff;
+
+                                if (yVisibleOffset < 0)
+                                {
+                                    if (fabsf(yVisibleOffset) < proxyHeight / 2)
+                                    {
+                                        scrollBack.y = (proxyCenterY - proxyHeight / 2) - yVisibleOffset;
+                                    }
+                                    else
+                                    {
+                                        scrollBack.y = proxyCenterY + proxyHeight / 2;
+                                    }
+                                }
+
+                                [scrollViewImpl setContentOffset:scrollBack animated:NO];
+                            }
+                            else
+                            {
+                                [scrollViewImpl scrollRectToVisible:proxyFrame animated:NO];
+                            }
+                        }
                     }
                     else
                     {
-                        [(TiUIScrollViewProxy*)proxy.parent layoutChildrenAfterContentSize:NO];
-                        [(TiUIScrollViewProxy*)proxy.parent contentsWillChange];
+                        [proxy.parent layoutChildren:NO];
                     }
                 }
                 else
@@ -194,6 +241,19 @@ layoutProperties->prop = TiDimensionFromObject(prop);\
                     [sibling.view removeEasingFunctionForKeyPath:@"frame"];
                 }
             }];
+
+            // ## BOF: Scrollback Fix
+
+            if ([proxy.parent isKindOfClass:[TiUIScrollViewProxy class]])
+            {
+                TiUIScrollViewProxy* scrollViewProxy = (TiUIScrollViewProxy*)proxy.parent;
+                TiUIScrollView* scrollView = (TiUIScrollView*)scrollViewProxy.view;
+                TiUIScrollViewImpl* scrollViewImpl = [scrollView scrollView];
+
+                [scrollViewImpl removeEasingFunctionForKeyPath:@"bounds"];
+            }
+
+            // ## EOF: Scrollback Fix
         }
 
         if (transform)
@@ -224,6 +284,63 @@ layoutProperties->prop = TiDimensionFromObject(prop);\
                         easing:[self getEasingFunc:easing]
                       duration:duration_];
     }
+}
+
+- (CGPoint)measureScrollBackForScrollViewProxy:(TiUIScrollViewProxy*)scrollViewProxy
+{
+    TiUIScrollView* scrollView = (TiUIScrollView*)scrollViewProxy.view;
+    TiUIScrollViewImpl* scrollViewImpl = [scrollView scrollView];
+
+    CGSize newContentSize = [scrollViewProxy.view bounds].size;
+    CGFloat scale = [scrollViewImpl zoomScale];
+    TiDimension contentHeight, contentWidth;
+    CGFloat minimumContentHeight;
+
+    object_getInstanceVariable(scrollView, "contentHeight", (void*)&contentHeight);
+    object_getInstanceVariable(scrollView, "contentWidth", (void*)&contentWidth);
+
+    switch (contentWidth.type)
+	{
+		case TiDimensionTypeDip:
+			newContentSize.width = MAX(newContentSize.width,contentWidth.value);
+			break;
+        case TiDimensionTypeUndefined:
+        case TiDimensionTypeAutoSize:
+		case TiDimensionTypeAuto:
+			newContentSize.width = MAX(newContentSize.width, [scrollViewProxy autoWidthForSize:scrollViewProxy.view.bounds.size]);
+			break;
+        case TiDimensionTypeAutoFill:
+		default:
+			break;
+	}
+
+    switch (contentHeight.type)
+    {
+        case TiDimensionTypeDip:
+            minimumContentHeight = contentHeight.value;
+            break;
+        case TiDimensionTypeUndefined:
+        case TiDimensionTypeAutoSize:
+        case TiDimensionTypeAuto:
+            minimumContentHeight = [scrollViewProxy autoHeightForSize:scrollViewProxy.view.bounds.size];
+            break;
+        case TiDimensionTypeAutoFill:
+        default:
+            minimumContentHeight = newContentSize.height;
+            break;
+    }
+
+    CGFloat rightWidth = scale;
+
+    rightWidth *= newContentSize.width;
+    rightWidth -= scrollViewImpl.bounds.size.width + scrollViewImpl.contentInset.right;
+
+    CGFloat bottomHeight = scale;
+
+    bottomHeight *= MAX(newContentSize.height, minimumContentHeight);
+    bottomHeight -= scrollViewImpl.bounds.size.height + scrollViewImpl.contentInset.bottom;
+
+    return CGPointMake(rightWidth, bottomHeight);
 }
 
 - (void)animateDraggable:(TiViewProxy*)parentProxy options:(NSDictionary*)options easing:(AHEasingFunction)easing duration:(double)duration
