@@ -1,5 +1,8 @@
-xcuserdata
-tmp
-bin
-build
+xcuserdata/
+tmp/
+bin/
+build/
+.settings/
+android/dist/
 *.zip
+*.xccheckout
