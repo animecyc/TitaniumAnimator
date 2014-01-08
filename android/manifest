@@ -1,0 +1,12 @@
+version: 1.0.0
+apiversion: 2
+description: A drop-in animation replacement for Titanium
+author: Seth Benjamin
+license: GPLv3
+copyright: Copyright (c) 2013 by Seth Benjamin
+
+name: animator
+moduleid: com.animecyc.animator
+guid: 9121C973-0D25-468F-B2CD-5E93DA983AC8
+platform: android
+minsdk: 3.1.3.GA
