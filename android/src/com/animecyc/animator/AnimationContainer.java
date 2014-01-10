@@ -25,7 +25,7 @@ import org.appcelerator.titanium.util.TiConvert;
 import org.appcelerator.titanium.view.TiCompositeLayout;
 
 import android.graphics.Color;
-import android.view.ViewGroup;
+import android.view.View;
 
 public class AnimationContainer
 {
@@ -38,7 +38,7 @@ public class AnimationContainer
 	/**
 	 * A TiUIView's native view
 	 */
-	protected ViewGroup nativeView;
+	protected View nativeView;
 
 	/**
 	 * A native views composite layout parameters
@@ -54,7 +54,7 @@ public class AnimationContainer
 	public AnimationContainer(TiViewProxy proxy)
 	{
 		this.proxy = proxy;
-		this.nativeView = (ViewGroup) proxy.peekView().getOuterView();
+		this.nativeView = (View) proxy.peekView().getOuterView();
 		this.layoutParams = (TiCompositeLayout.LayoutParams) this.nativeView.getLayoutParams();
 	}
 
@@ -217,7 +217,7 @@ public class AnimationContainer
 	 *
 	 * @return A view
 	 */
-	public ViewGroup getNativeView()
+	public View getNativeView()
 	{
 		return this.nativeView;
 	}

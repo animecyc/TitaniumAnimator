@@ -37,7 +37,6 @@ import org.appcelerator.titanium.view.TiCompositeLayout;
 import android.app.Activity;
 import android.graphics.Color;
 import android.view.View;
-import android.view.ViewGroup;
 import aurelienribon.tweenengine.BaseTween;
 import aurelienribon.tweenengine.Timeline;
 import aurelienribon.tweenengine.Tween;
@@ -319,7 +318,7 @@ public class AnimatorModule extends KrollModule
 	{
 		final TiViewProxy proxy = accessor.getProxy();
 		final View parentWindow = TiApplication.getAppCurrentActivity().getWindow().getDecorView();
-		final ViewGroup parentView = proxy.getParent() != null ? (ViewGroup) proxy.getParent().peekView().getNativeView() : null;
+		final View parentView = proxy.getParent() != null ? (View) proxy.getParent().peekView().getOuterView() : null;
 		final float duration = this.computeDuration(animationProps);
 		final TweenEquation easingFunction = this.determineEasingFunction(animationProps);
 
