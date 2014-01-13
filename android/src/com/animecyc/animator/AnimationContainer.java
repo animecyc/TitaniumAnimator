@@ -145,7 +145,7 @@ public class AnimationContainer
 	 */
 	public void setBackgroundColor(int backgroundColor)
 	{
-		this.proxy.setPropertyAndFire(TiC.PROPERTY_BACKGROUND_COLOR, String.format("#%06X", (0xFFFFFF & backgroundColor)));
+		this.proxy.setPropertyAndFire(TiC.PROPERTY_BACKGROUND_COLOR, String.format("#%08X", 0xFFFFFFFF & backgroundColor));
 	}
 
 	/**
