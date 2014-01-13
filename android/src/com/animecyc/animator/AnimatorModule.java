@@ -27,6 +27,7 @@ import org.appcelerator.kroll.KrollDict;
 import org.appcelerator.kroll.KrollFunction;
 import org.appcelerator.kroll.KrollModule;
 import org.appcelerator.kroll.annotations.Kroll;
+import org.appcelerator.kroll.common.Log;
 import org.appcelerator.titanium.TiApplication;
 import org.appcelerator.titanium.TiC;
 import org.appcelerator.titanium.TiDimension;
@@ -462,6 +463,7 @@ public class AnimatorModule extends KrollModule
 		if (animationProps.containsKeyAndNotNull(TiC.PROPERTY_BACKGROUND_COLOR))
 		{
 			int backgroundColor = TiConvert.toColor(animationProps, TiC.PROPERTY_BACKGROUND_COLOR);
+			
 			float alpha = Color.alpha(backgroundColor),
 				  red = Color.red(backgroundColor),
 				  green = Color.green(backgroundColor),
@@ -470,6 +472,23 @@ public class AnimatorModule extends KrollModule
 			timeline.push(Tween.to(accessor, AnimationContainerAccessor.BACKGROUND_COLOR, duration)
 					.ease(easingFunction)
 					.target(alpha, red, green, blue));
+		}
+		
+		if (accessor.getProxy().getClass().getSimpleName().equals("LabelProxy"))
+		{
+			if (animationProps.containsKeyAndNotNull(TiC.PROPERTY_COLOR))
+			{
+				int color = TiConvert.toColor(animationProps, TiC.PROPERTY_COLOR);
+				
+				float alpha = Color.alpha(color),
+					  red = Color.red(color),
+					  green = Color.green(color),
+					  blue = Color.blue(color);
+
+				timeline.push(Tween.to(accessor, AnimationContainerAccessor.COLOR, duration)
+						.ease(easingFunction)
+						.target(alpha, red, green, blue));
+			}
 		}
 
 		if (animationProps.containsKeyAndNotNull(TiC.PROPERTY_ROTATE))

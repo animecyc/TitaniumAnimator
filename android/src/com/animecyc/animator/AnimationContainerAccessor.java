@@ -70,16 +70,21 @@ public class AnimationContainerAccessor implements TweenAccessor<AnimationContai
 	 * Accessor Constant - Background Color
 	 */
 	public static final int BACKGROUND_COLOR = 9;
+	
+	/**
+	 * Accessor Constant - Background Color
+	 */
+	public static final int COLOR = 10;
 
 	/**
 	 * Accessor Constant - Rotation
 	 */
-	public static final int ROTATION = 10;
+	public static final int ROTATION = 11;
 
 	/**
 	 * Accessor Constant - Alpha
 	 */
-	public static final int OPACITY = 11;
+	public static final int OPACITY = 12;
 
 	/**
 	 * Get values to interpolate
@@ -181,6 +186,15 @@ public class AnimationContainerAccessor implements TweenAccessor<AnimationContai
 				returnValues[3] = Color.blue(backgroundColor);
 
 				return 4;
+			case COLOR:
+				final int color = target.getColor();
+
+				returnValues[0] = Color.alpha(color);
+				returnValues[1] = Color.red(color);
+				returnValues[2] = Color.green(color);
+				returnValues[3] = Color.blue(color);
+
+				return 4;
 			case ROTATION:
 				returnValues[0] = target.getRotation();
 
@@ -263,6 +277,17 @@ public class AnimationContainerAccessor implements TweenAccessor<AnimationContai
 						blue = (int) newValues[3];
 
 					target.setBackgroundColor(Color.argb(alpha, red, green, blue));
+				}
+				break;
+			case COLOR:
+				if (newValues.length > 3)
+				{
+					int alpha = (int) newValues[0],
+						red = (int) newValues[1],
+						green = (int) newValues[2],
+						blue = (int) newValues[3];
+
+					target.setColor(Color.argb(alpha, red, green, blue));
 				}
 				break;
 			case ROTATION:

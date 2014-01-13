@@ -18,6 +18,7 @@
  */
 package com.animecyc.animator;
 
+import org.appcelerator.kroll.common.Log;
 import org.appcelerator.titanium.TiC;
 import org.appcelerator.titanium.TiDimension;
 import org.appcelerator.titanium.proxy.TiViewProxy;
@@ -135,6 +136,39 @@ public class AnimationContainer
         }
 
 		return backgroundColor;
+	}
+
+	/**
+	 * Set the color on a LabelProxy
+	 *
+	 * @param backgroundColor The color to set
+	 */
+	public void setColor(int color)
+	{
+		this.proxy.setPropertyAndFire(TiC.PROPERTY_COLOR, String.format("#%08X", 0xFFFFFFFF & color));
+	}
+	
+	/**
+	 * Get the currently set color
+	 * from the LabelProxy
+	 *
+	 * @return A color
+	 */
+	public int getColor()
+	{
+		int color;
+
+        if (this.proxy.hasProperty(TiC.PROPERTY_COLOR))
+        {
+        	String _color = TiConvert.toString(this.proxy.getProperty(TiC.PROPERTY_COLOR));
+        	color = TiConvert.toColor(_color);
+        }
+        else
+        {
+        	color = Color.argb(255, 0, 0, 0);
+        }
+
+		return color;
 	}
 
 	/**
