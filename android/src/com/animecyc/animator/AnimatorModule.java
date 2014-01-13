@@ -410,7 +410,7 @@ public class AnimatorModule extends KrollModule
 		{
 			KrollDict centerPosition = animationProps.getKrollDict(TiC.PROPERTY_CENTER);
 
-			if (centerPosition.containsKey(TiC.PROPERTY_X))
+			if (centerPosition.containsKeyAndNotNull(TiC.PROPERTY_X))
 			{
 				int[] horizontal = new int[2];
 				float centerX = TiConvert.toFloat(centerPosition, TiC.PROPERTY_X);
@@ -434,7 +434,7 @@ public class AnimatorModule extends KrollModule
 						.target(centerX));
 			};
 
-			if (centerPosition.containsKey(TiC.PROPERTY_Y))
+			if (centerPosition.containsKeyAndNotNull(TiC.PROPERTY_Y))
 			{
 				int[] vertical = new int[2];
 				int height = accessor.getNativeView().getHeight();
@@ -459,7 +459,7 @@ public class AnimatorModule extends KrollModule
 			}
 		}
 
-		if (animationProps.containsKey(TiC.PROPERTY_BACKGROUND_COLOR))
+		if (animationProps.containsKeyAndNotNull(TiC.PROPERTY_BACKGROUND_COLOR))
 		{
 			int backgroundColor = TiConvert.toColor(animationProps, TiC.PROPERTY_BACKGROUND_COLOR);
 			float alpha = Color.alpha(backgroundColor),
@@ -472,7 +472,7 @@ public class AnimatorModule extends KrollModule
 					.target(alpha, red, green, blue));
 		}
 
-		if (animationProps.containsKey(TiC.PROPERTY_ROTATE))
+		if (animationProps.containsKeyAndNotNull(TiC.PROPERTY_ROTATE))
 		{
 			float rotation = TiConvert.toFloat(animationProps, TiC.PROPERTY_ROTATE);
 			Float lastRotation = (Float) proxy.getProperty("__rotation");
@@ -501,7 +501,7 @@ public class AnimatorModule extends KrollModule
 					}));
 		}
 
-		if (animationProps.containsKey(TiC.PROPERTY_OPACITY))
+		if (animationProps.containsKeyAndNotNull(TiC.PROPERTY_OPACITY))
 		{
 			float opacity = TiConvert.toFloat(animationProps, TiC.PROPERTY_OPACITY);
 
