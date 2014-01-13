@@ -212,7 +212,7 @@ public class AnimationContainer
 	 */
 	public float getAlpha()
 	{
-		return this.nativeView.getAlpha();
+		return this.nativeView.getAlpha() * 100;
 	}
 
 	/**
@@ -223,6 +223,20 @@ public class AnimationContainer
 	 */
 	public void setAlpha(float alpha)
 	{
+		if (alpha > 0)
+		{
+			alpha /= 100;
+			
+			if (alpha > 1)
+			{
+				alpha = 1;
+			}
+		}
+		else
+		{
+			alpha = 0;
+		}
+		
 		this.proxy.setPropertyAndFire("opacity", alpha);
 	}
 

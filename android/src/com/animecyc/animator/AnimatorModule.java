@@ -323,7 +323,7 @@ public class AnimatorModule extends KrollModule
 		final float duration = this.computeDuration(animationProps);
 		final TweenEquation easingFunction = this.determineEasingFunction(animationProps);
 
-		if (animationProps.containsKey(TiC.PROPERTY_TOP))
+		if (animationProps.containsKeyAndNotNull(TiC.PROPERTY_TOP))
 		{
 			TiDimension topDimension = TiConvert.toTiDimension(animationProps, TiC.PROPERTY_TOP, TiDimension.TYPE_TOP);
 
@@ -337,7 +337,7 @@ public class AnimatorModule extends KrollModule
 					.target(topDimension.getAsPixels(parentWindow)));
 		}
 
-		if (animationProps.containsKey(TiC.PROPERTY_LEFT))
+		if (animationProps.containsKeyAndNotNull(TiC.PROPERTY_LEFT))
 		{
 			TiDimension leftDimension = TiConvert.toTiDimension(animationProps, TiC.PROPERTY_LEFT, TiDimension.TYPE_LEFT);
 
@@ -351,7 +351,7 @@ public class AnimatorModule extends KrollModule
 					.target(leftDimension.getAsPixels(parentWindow)));
 		}
 
-		if (animationProps.containsKey(TiC.PROPERTY_BOTTOM))
+		if (animationProps.containsKeyAndNotNull(TiC.PROPERTY_BOTTOM))
 		{
 			TiDimension bottomDimension = TiConvert.toTiDimension(animationProps, TiC.PROPERTY_BOTTOM, TiDimension.TYPE_BOTTOM);
 
@@ -365,7 +365,7 @@ public class AnimatorModule extends KrollModule
 					.target(bottomDimension.getAsPixels(parentWindow)));
 		}
 
-		if (animationProps.containsKey(TiC.PROPERTY_RIGHT))
+		if (animationProps.containsKeyAndNotNull(TiC.PROPERTY_RIGHT))
 		{
 			TiDimension rightDimension = TiConvert.toTiDimension(animationProps, TiC.PROPERTY_RIGHT, TiDimension.TYPE_RIGHT);
 
@@ -382,10 +382,13 @@ public class AnimatorModule extends KrollModule
 		if (animationProps.containsKey(TiC.PROPERTY_WIDTH))
 		{
 			TiDimension widthDimension = TiConvert.toTiDimension(animationProps, TiC.PROPERTY_WIDTH, TiDimension.TYPE_WIDTH);
-
-			if ((animationProps.get(TiC.PROPERTY_WIDTH) == null || animationProps.get(TiC.PROPERTY_WIDTH).equals(TiC.LAYOUT_FILL)) && parentView != null)
+			
+			if (parentView != null)
 			{
-				widthDimension = new TiDimension(parentView.getWidth(), TiDimension.TYPE_WIDTH);
+				if (animationProps.get(TiC.PROPERTY_WIDTH) == null || animationProps.get(TiC.PROPERTY_WIDTH).equals(TiC.LAYOUT_FILL))
+				{
+					widthDimension = new TiDimension(parentView.getWidth(), TiDimension.TYPE_WIDTH);
+				}
 			}
 
 			timeline.push(Tween.to(accessor, AnimationContainerAccessor.WIDTH, duration)
@@ -397,9 +400,12 @@ public class AnimatorModule extends KrollModule
 		{
 			TiDimension heightDimension = TiConvert.toTiDimension(animationProps, TiC.PROPERTY_HEIGHT, TiDimension.TYPE_HEIGHT);
 
-			if ((animationProps.get(TiC.PROPERTY_HEIGHT) == null || animationProps.get(TiC.PROPERTY_HEIGHT).equals(TiC.LAYOUT_FILL)) && parentView != null)
+			if (parentView != null)
 			{
-				heightDimension = new TiDimension(parentView.getHeight(), TiDimension.TYPE_HEIGHT);
+				if (animationProps.get(TiC.PROPERTY_HEIGHT) == null || animationProps.get(TiC.PROPERTY_HEIGHT).equals(TiC.LAYOUT_FILL))
+				{
+					heightDimension = new TiDimension(parentView.getHeight(), TiDimension.TYPE_HEIGHT);
+				}
 			}
 
 			timeline.push(Tween.to(accessor, AnimationContainerAccessor.HEIGHT, duration)
@@ -524,18 +530,18 @@ public class AnimatorModule extends KrollModule
 		{
 			float opacity = TiConvert.toFloat(animationProps, TiC.PROPERTY_OPACITY);
 
-			if (opacity > 1f)
+			if (opacity > 1)
 			{
-				opacity = 1f;
+				opacity = 1;
 			}
-			else if (opacity < 0f)
+			else if (opacity < 0)
 			{
-				opacity = 0f;
+				opacity = 0;
 			}
 
 			timeline.push(Tween.to(accessor, AnimationContainerAccessor.OPACITY, duration)
 					.ease(easingFunction)
-					.target(opacity));
+					.target(opacity * 100));
 		}
 	}
 
@@ -572,7 +578,57 @@ public class AnimatorModule extends KrollModule
 		final TiCompositeLayout.LayoutParams layoutParams = accessor.getLayoutParams();
 
 		this.animationManagers.remove(animationId);
+		
+		if (animationProps.containsKey(TiC.PROPERTY_TOP))
+		{
+			proxy.setProperty(TiC.PROPERTY_TOP, animationProps.get(TiC.PROPERTY_TOP));
+		}
 
+		if (animationProps.containsKey(TiC.PROPERTY_LEFT))
+		{
+			proxy.setProperty(TiC.PROPERTY_LEFT, animationProps.get(TiC.PROPERTY_LEFT));
+		}
+
+		if (animationProps.containsKey(TiC.PROPERTY_BOTTOM))
+		{
+			proxy.setProperty(TiC.PROPERTY_BOTTOM, animationProps.get(TiC.PROPERTY_BOTTOM));
+		}
+
+		if (animationProps.containsKey(TiC.PROPERTY_RIGHT))
+		{
+			proxy.setProperty(TiC.PROPERTY_RIGHT, animationProps.get(TiC.PROPERTY_RIGHT));
+		}
+
+		if (animationProps.containsKey(TiC.PROPERTY_WIDTH))
+		{
+			proxy.setProperty(TiC.PROPERTY_WIDTH, animationProps.get(TiC.PROPERTY_WIDTH));
+		}
+
+		if (animationProps.containsKey(TiC.PROPERTY_HEIGHT))
+		{
+			proxy.setProperty(TiC.PROPERTY_HEIGHT, animationProps.get(TiC.PROPERTY_HEIGHT));
+		}
+
+		if (animationProps.containsKey(TiC.PROPERTY_CENTER))
+		{
+			proxy.setProperty(TiC.PROPERTY_CENTER, animationProps.get(TiC.PROPERTY_CENTER));
+		}
+
+		if (animationProps.containsKey(TiC.PROPERTY_OPACITY))
+		{
+			proxy.setProperty(TiC.PROPERTY_OPACITY, animationProps.get(TiC.PROPERTY_OPACITY));
+		}
+
+		if (animationProps.containsKey(TiC.PROPERTY_BACKGROUND_COLOR))
+		{
+			proxy.setProperty(TiC.PROPERTY_BACKGROUND_COLOR, animationProps.get(TiC.PROPERTY_BACKGROUND_COLOR));
+		}
+
+		if (animationProps.containsKey(TiC.PROPERTY_COLOR))
+		{
+			proxy.setProperty(TiC.PROPERTY_COLOR, animationProps.get(TiC.PROPERTY_COLOR));
+		}
+		
 		if (animationProps.containsKeyAndNotNull(TiC.PROPERTY_WIDTH) && ! animationProps.get(TiC.PROPERTY_WIDTH).equals(TiC.LAYOUT_FILL))
 		{
 			animationProps.remove(TiC.PROPERTY_WIDTH);
@@ -686,7 +742,7 @@ public class AnimatorModule extends KrollModule
 	 */
 	protected float computeDuration(final KrollDict animationProps)
 	{
-		float duration = animationProps.containsKey(TiC.PROPERTY_DURATION) ? TiConvert.toFloat(animationProps, TiC.PROPERTY_DURATION) : 0.25f;
+		float duration = animationProps.containsKey(TiC.PROPERTY_DURATION) ? TiConvert.toFloat(animationProps, TiC.PROPERTY_DURATION) : 250;
 
 		if (duration > 0)
 		{
