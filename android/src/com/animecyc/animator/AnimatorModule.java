@@ -687,70 +687,73 @@ public class AnimatorModule extends KrollModule
 	 */
 	protected TweenEquation determineEasingFunction(final KrollDict animationProps)
 	{
-		switch (animationProps.getInt("easing"))
+		if (animationProps.containsKeyAndNotNull("easing"))
 		{
-			case AnimatorModule.QUAD_IN:
-				return Quad.IN;
-			case AnimatorModule.QUAD_OUT:
-				return Quad.OUT;
-			case AnimatorModule.QUAD_IN_OUT:
-				return Quad.INOUT;
-			case AnimatorModule.CUBIC_IN:
-				return Cubic.IN;
-			case AnimatorModule.CUBIC_OUT:
-				return Cubic.OUT;
-			case AnimatorModule.CUBIC_IN_OUT:
-				return Cubic.INOUT;
-			case AnimatorModule.QUART_IN:
-				return Quart.IN;
-			case AnimatorModule.QUART_OUT:
-				return Quart.OUT;
-			case AnimatorModule.QUART_IN_OUT:
-				return Quart.INOUT;
-			case AnimatorModule.QUINT_IN:
-				return Quint.IN;
-			case AnimatorModule.QUINT_OUT:
-				return Quint.OUT;
-			case AnimatorModule.QUINT_IN_OUT:
-				return Quint.INOUT;
-			case AnimatorModule.SINE_IN:
-				return Sine.IN;
-			case AnimatorModule.SINE_OUT:
-				return Sine.OUT;
-			case AnimatorModule.SINE_IN_OUT:
-				return Sine.INOUT;
-			case AnimatorModule.CIRC_IN:
-				return Circ.IN;
-			case AnimatorModule.CIRC_OUT:
-				return Circ.OUT;
-			case AnimatorModule.CIRC_IN_OUT:
-				return Circ.INOUT;
-			case AnimatorModule.EXP_IN:
-				return Expo.IN;
-			case AnimatorModule.EXP_OUT:
-				return Expo.OUT;
-			case AnimatorModule.EXP_IN_OUT:
-				return Expo.INOUT;
-			case AnimatorModule.ELASTIC_IN:
-				return Elastic.IN;
-			case AnimatorModule.ELASTIC_OUT:
-				return Elastic.OUT;
-			case AnimatorModule.ELASTIC_IN_OUT:
-				return Elastic.INOUT;
-			case AnimatorModule.BACK_IN:
-				return Back.IN;
-			case AnimatorModule.BACK_OUT:
-				return Back.OUT;
-			case AnimatorModule.BACK_IN_OUT:
-				return Back.INOUT;
-			case AnimatorModule.BOUNCE_IN:
-				return Bounce.IN;
-			case AnimatorModule.BOUNCE_OUT:
-				return Bounce.OUT;
-			case AnimatorModule.BOUNCE_IN_OUT:
-				return Bounce.INOUT;
-			default:
-				return Linear.INOUT;
+			switch (TiConvert.toInt(animationProps, "easing"))
+			{
+				case AnimatorModule.QUAD_IN:
+					return Quad.IN;
+				case AnimatorModule.QUAD_OUT:
+					return Quad.OUT;
+				case AnimatorModule.QUAD_IN_OUT:
+					return Quad.INOUT;
+				case AnimatorModule.CUBIC_IN:
+					return Cubic.IN;
+				case AnimatorModule.CUBIC_OUT:
+					return Cubic.OUT;
+				case AnimatorModule.CUBIC_IN_OUT:
+					return Cubic.INOUT;
+				case AnimatorModule.QUART_IN:
+					return Quart.IN;
+				case AnimatorModule.QUART_OUT:
+					return Quart.OUT;
+				case AnimatorModule.QUART_IN_OUT:
+					return Quart.INOUT;
+				case AnimatorModule.QUINT_IN:
+					return Quint.IN;
+				case AnimatorModule.QUINT_OUT:
+					return Quint.OUT;
+				case AnimatorModule.QUINT_IN_OUT:
+					return Quint.INOUT;
+				case AnimatorModule.SINE_IN:
+					return Sine.IN;
+				case AnimatorModule.SINE_OUT:
+					return Sine.OUT;
+				case AnimatorModule.SINE_IN_OUT:
+					return Sine.INOUT;
+				case AnimatorModule.CIRC_IN:
+					return Circ.IN;
+				case AnimatorModule.CIRC_OUT:
+					return Circ.OUT;
+				case AnimatorModule.CIRC_IN_OUT:
+					return Circ.INOUT;
+				case AnimatorModule.EXP_IN:
+					return Expo.IN;
+				case AnimatorModule.EXP_OUT:
+					return Expo.OUT;
+				case AnimatorModule.EXP_IN_OUT:
+					return Expo.INOUT;
+				case AnimatorModule.ELASTIC_IN:
+					return Elastic.IN;
+				case AnimatorModule.ELASTIC_OUT:
+					return Elastic.OUT;
+				case AnimatorModule.ELASTIC_IN_OUT:
+					return Elastic.INOUT;
+				case AnimatorModule.BACK_IN:
+					return Back.IN;
+				case AnimatorModule.BACK_OUT:
+					return Back.OUT;
+				case AnimatorModule.BACK_IN_OUT:
+					return Back.INOUT;
+				case AnimatorModule.BOUNCE_IN:
+					return Bounce.IN;
+				case AnimatorModule.BOUNCE_OUT:
+					return Bounce.OUT;
+				case AnimatorModule.BOUNCE_IN_OUT:
+					return Bounce.INOUT;
+			}
 		}
+		
+		return Linear.INOUT;
 	}
 }
