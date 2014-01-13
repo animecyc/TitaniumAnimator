@@ -1,6 +1,6 @@
 # TitaniumAnimator
 
-A drop-in animation replacement for Titanium. This module's aim is to mimick as much of the Titanium animation module as possible with the addition of new timing functions and better performance. As of right now the only properties that can be animated are: `rotate`, `transform`, `top`, `bottom`, `left`, `right`, `width`, `height`, `opacity`, `color` and `backgroundColor`. The `transform` and `color` properties are not support by Android at this time.
+A drop-in animation replacement for Titanium. This module's aim is to mimick as much of the Titanium animation module as possible with the addition of new timing functions and better performance. As of right now the only properties that can be animated are: `rotate`, `transform`, `top`, `bottom`, `left`, `right`, `width`, `height`, `opacity`, `color` and `backgroundColor`. The `transform` property are not support by Android at this time.
 
 ## Support
 

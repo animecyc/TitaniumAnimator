@@ -1,6 +1,6 @@
 # TitaniumAnimator
 
-A drop-in animation replacement for Titanium. This module's aim is to mimick as much of the Titanium animation module as possible with the addition of new timing functions and better performance. As of right now the only properties that can be animated are: `rotate`, `transform`, `top`, `bottom`, `left`, `right`, `width`, `height`, `opacity`, `color` and `backgroundColor`. The `transform` and `color` properties are not support by Android at this time.
+A drop-in animation replacement for Titanium. This module's aim is to mimick as much of the Titanium animation module as possible with the addition of new timing functions and better performance. As of right now the only properties that can be animated are: `rotate`, `transform`, `top`, `bottom`, `left`, `right`, `width`, `height`, `opacity`, `color` and `backgroundColor`. The `transform` property are not support by Android at this time.
 
 ## Support
 
@@ -52,7 +52,7 @@ If you need to perform a rotation you can pass the `rotate` property which accep
 
 Once a rotation has been performed subsequent rotations will be performed from its last rotation angle. To simplify multiple rotations you can pass values > 360. For example to do two complete rotations you can pass a value of 720.
 
-## Text Color
+## Text Color (iOS)
 
 In order to animate the text color of a Ti.UI.Label you must use a compatiable label replacement. You can get a simple version here: [TitaniumCoreLabel](https://github.com/animecyc/TitaniumCoreLabel).
 
@@ -74,12 +74,30 @@ Animator.animate(testLabel, {
 
 > The only property that can be animated on a label created via CoreLabel is the `color` property. The `font` property is forthcoming.
 
-## Layout Support
+## Layout Support (iOS)
 
-When animating views in a horizontal or vertical layout sibling views will *pop* into place as opposed to animating to the correct position. You can pass the `siblings` flag to the animation properties to ensure that all sibling views animate to their correct location. By default this flag is set to `false`. Android does not support sibling animations
-at this time.
+When animating views in a horizontal or vertical layout sibling views will *pop* into place as opposed to animating to the correct position. You can pass the `siblings` flag to the animation properties to ensure that all sibling views animate to their correct location. By default this flag is set to `false`.
 
 > There is the possibility of a hit in performace when animating large quantities of sibling views together.
+
+## [TiDraggable](https://github.com/animecyc/TiDraggable) Support (iOS)
+
+If the view you're animating is a view touched by [TiDraggable](https://github.com/animecyc/TiDraggable) module you can perform a tandem animation; All attached proxies will be animated at the same time within the supplied constraints.
+
+```javascript
+Animator.animate(animationView, {
+	duration : 1000,
+	easing : Animator.BOUNCE_OUT,
+	left : 250,
+	draggable : {
+		x : 'end'
+	}
+});
+```
+
+Given the above usage example, if the view being animated has views "attached" to it, via the `maps` declaration, you can have them animate their position into place as if it were being panned. This creates a fluid expirience for situations where you need to have both drag and drop support and animations between multiple related views.
+
+Both `draggable` property axes (x & y) support the use of either a string representing the key used for the axis constraint on the draggable configuration or an integer for custom arrangements.
 
 ## Easing Functions
 
@@ -116,22 +134,3 @@ The below easing functions can be accessed as you would any other Titanium const
 * BOUNCE_IN
 * BOUNCE_OUT
 * BOUNCE_IN_OUT
-
-## [TiDraggable](https://github.com/animecyc/TiDraggable) Support (iOS Only)
-
-If the view you're animating is a view touched by [TiDraggable](https://github.com/animecyc/TiDraggable) module you can perform a tandem animation; All attached proxies will be animated at the same time within the supplied constraints.
-
-```javascript
-Animator.animate(animationView, {
-	duration : 1000,
-	easing : Animator.BOUNCE_OUT,
-	left : 250,
-	draggable : {
-		x : 'end'
-	}
-});
-```
-
-Given the above usage example, if the view being animated has views "attached" to it, via the `maps` declaration, you can have them animate their position into place as if it were being panned. This creates a fluid expirience for situations where you need to have both drag and drop support and animations between multiple related views.
-
-Both `draggable` property axes (x & y) support the use of either a string representing the key used for the axis constraint on the draggable configuration or an integer for custom arrangements.
