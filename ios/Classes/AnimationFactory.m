@@ -83,6 +83,36 @@ layoutProperties->prop = TiDimensionFromObject(prop);\
                     [sibling.view removeEasingFunctionForKeyPath:@"frame"];
                 }
             }];
+            
+            if (top)
+            {
+                [proxy replaceValue:top forKey:@"top" notification:NO];
+            }
+            
+            if (left)
+            {
+                [proxy replaceValue:left forKey:@"left" notification:NO];
+            }
+            
+            if (bottom)
+            {
+                [proxy replaceValue:bottom forKey:@"bottom" notification:NO];
+            }
+            
+            if (right)
+            {
+                [proxy replaceValue:right forKey:@"right" notification:NO];
+            }
+            
+            if (width)
+            {
+                [proxy replaceValue:width forKey:@"width" notification:NO];
+            }
+            
+            if (height)
+            {
+                [proxy replaceValue:height forKey:@"height" notification:NO];
+            }
         }
         
         if (transform)
