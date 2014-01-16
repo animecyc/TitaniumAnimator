@@ -18,9 +18,11 @@
  */
 package com.animecyc.animator;
 
+import org.appcelerator.titanium.TiApplication;
 import org.appcelerator.titanium.view.TiCompositeLayout;
 
 import android.graphics.Color;
+import android.view.View;
 import aurelienribon.tweenengine.TweenAccessor;
 
 public class AnimationContainerAccessor implements TweenAccessor<AnimationContainer>
@@ -70,7 +72,7 @@ public class AnimationContainerAccessor implements TweenAccessor<AnimationContai
 	 * Accessor Constant - Background Color
 	 */
 	public static final int BACKGROUND_COLOR = 9;
-	
+
 	/**
 	 * Accessor Constant - Background Color
 	 */
@@ -97,6 +99,7 @@ public class AnimationContainerAccessor implements TweenAccessor<AnimationContai
 	@Override
 	public int getValues(AnimationContainer target, int tweenType, float[] returnValues)
 	{
+		final View parentWindow = TiApplication.getAppCurrentActivity().getWindow().getDecorView();
 		TiCompositeLayout.LayoutParams layoutParams = null;
 
 		if (tweenType > 0 && tweenType < 9) {
@@ -108,7 +111,7 @@ public class AnimationContainerAccessor implements TweenAccessor<AnimationContai
 			case TOP:
 				if (layoutParams != null)
 				{
-					returnValues[0] = (float) (layoutParams.optionTop == null ? 0 : layoutParams.optionTop.getValue());
+					returnValues[0] = (float) (layoutParams.optionTop == null ? 0 : layoutParams.optionTop.getAsPixels(parentWindow));
 
 					return 1;
 				}
@@ -117,7 +120,7 @@ public class AnimationContainerAccessor implements TweenAccessor<AnimationContai
 			case LEFT:
 				if (layoutParams != null)
 				{
-					returnValues[0] = (float) (layoutParams.optionLeft == null ? 0 : layoutParams.optionLeft.getValue());
+					returnValues[0] = (float) (layoutParams.optionLeft == null ? 0 : layoutParams.optionLeft.getAsPixels(parentWindow));
 
 					return 1;
 				}
@@ -126,7 +129,7 @@ public class AnimationContainerAccessor implements TweenAccessor<AnimationContai
 			case BOTTOM:
 				if (layoutParams != null)
 				{
-					returnValues[0] = (float) (layoutParams.optionBottom == null ? 0 : layoutParams.optionBottom.getValue());
+					returnValues[0] = (float) (layoutParams.optionBottom == null ? 0 : layoutParams.optionBottom.getAsPixels(parentWindow));
 
 					return 1;
 				}
@@ -135,7 +138,7 @@ public class AnimationContainerAccessor implements TweenAccessor<AnimationContai
 			case RIGHT:
 				if (layoutParams != null)
 				{
-					returnValues[0] = (float) (layoutParams.optionRight == null ? 0 : layoutParams.optionRight.getValue());
+					returnValues[0] = (float) (layoutParams.optionRight == null ? 0 : layoutParams.optionRight.getAsPixels(parentWindow));
 
 					return 1;
 				}
@@ -162,7 +165,7 @@ public class AnimationContainerAccessor implements TweenAccessor<AnimationContai
 			case WIDTH:
 				if (layoutParams != null)
 				{
-					returnValues[0] = (float) (layoutParams.optionWidth == null ? target.getNativeView().getWidth() : layoutParams.optionWidth.getValue());
+					returnValues[0] = (float) (layoutParams.optionWidth == null ? target.getNativeView().getWidth() : layoutParams.optionWidth.getAsPixels(parentWindow));
 
 					return 1;
 				}
@@ -171,7 +174,7 @@ public class AnimationContainerAccessor implements TweenAccessor<AnimationContai
 			case HEIGHT:
 				if (layoutParams != null)
 				{
-					returnValues[0] = (float) (layoutParams.optionHeight == null ? target.getNativeView().getHeight() : layoutParams.optionHeight.getValue());
+					returnValues[0] = (float) (layoutParams.optionHeight == null ? target.getNativeView().getHeight() : layoutParams.optionHeight.getAsPixels(parentWindow));
 
 					return 1;
 				}
