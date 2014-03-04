@@ -36,9 +36,9 @@
 {
     ENSURE_UI_THREAD_1_ARG(args);
 
-    TiViewProxy* proxy;
-    NSDictionary* properties;
-    KrollCallback* callback;
+    TiViewProxy* proxy = nil;
+    NSDictionary* properties = nil;
+    KrollCallback* callback = nil;
 
     ENSURE_ARG_AT_INDEX(proxy, args, 0, TiViewProxy);
     ENSURE_ARG_OR_NIL_AT_INDEX(properties, args, 1, NSDictionary);

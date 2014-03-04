@@ -51,7 +51,22 @@ layoutProperties->prop = TiDimensionFromObject(prop);\
     TiColor* backgroundColor = [TiUtils colorValue:[properties objectForKey:@"backgroundColor"]];
     NSNumber* duration = [properties objectForKey:@"duration"];
     NSNumber* easing = [properties objectForKey:@"easing"];
-    NSNumber* animateSiblings = [TiUtils boolValue:[properties objectForKey:@"siblings"] def:NO];
+    BOOL animateSiblings = [TiUtils boolValue:[properties objectForKey:@"siblings"] def:NO];
+    BOOL opaque = [TiUtils boolValue:[properties objectForKey:@"opaque"] def:NO];
+    TiViewProxy* parentForAnimation = [properties objectForKey:@"parentForAnimation"];
+    TiViewProxy* parentToAnimate;
+    
+    if (animateSiblings)
+    {
+        if ([parentForAnimation isKindOfClass:[TiViewProxy class]])
+        {
+            parentToAnimate = parentForAnimation;
+        }
+        else
+        {
+            parentToAnimate = proxy.parent;
+        }
+    }
 
     if (duration == nil)
     {
@@ -65,6 +80,11 @@ layoutProperties->prop = TiDimensionFromObject(prop);\
 
     double duration_ = [duration doubleValue] / 1000;
     AHEasingFunction easingFunc = [self getEasingFunc:easing];
+    
+    if (opaque)
+    {
+        [proxy.view setOpaque:YES];
+    }
     
     [CATransaction begin];
     [CATransaction setValue:[NSNumber numberWithDouble:duration_] forKey:kCATransactionAnimationDuration];
@@ -128,6 +148,20 @@ layoutProperties->prop = TiDimensionFromObject(prop);\
         if (backgroundColor)
         {
             [proxy.view removeEasingFunctionForKeyPath:@"backgroundColor"];
+        }
+        
+        if ([parentToAnimate isKindOfClass:[TiUIScrollViewProxy class]])
+        {
+            TiUIScrollViewProxy* scrollViewProxy = (TiUIScrollViewProxy*)parentToAnimate;
+            TiUIScrollView* scrollView = (TiUIScrollView*)scrollViewProxy.view;
+            
+            [[scrollView wrapperView] removeEasingFunctionForKeyPath:@"frame"];
+
+        }
+        
+        if (opaque)
+        {
+            [proxy.view setOpaque:NO];
         }
         
         if (completed)
@@ -195,78 +229,38 @@ layoutProperties->prop = TiDimensionFromObject(prop);\
                 ENSURE_LAYOUT_PROPERTY(width);
                 ENSURE_LAYOUT_PROPERTY(height);
                 
+                object_setInstanceVariable(proxy, "_layoutProperties", &layoutProperties);
+                
+                [proxy relayout];
+                
                 if (animateSiblings)
                 {
-                    [proxy.parent.children enumerateObjectsUsingBlock:^(id obj, NSUInteger idx, BOOL *stop) {
-                        TiViewProxy* sibling = (TiViewProxy*)obj;
-                        
-                        if (! [proxy isEqual:sibling])
-                        {
-                            [sibling.view setEasingFunction:easingFunc forKeyPath:@"position"];
-                        }
-                    }];
-
-                    if ([proxy.parent isKindOfClass:[TiUIScrollViewProxy class]])
+                    TiViewProxy* parentToAnimate;
+                    
+                    if ([parentForAnimation isKindOfClass:[TiViewProxy class]])
                     {
-                        TiUIScrollViewProxy* scrollViewProxy = (TiUIScrollViewProxy*)proxy.parent;
-
-                        [scrollViewProxy layoutChildrenAfterContentSize:NO];
-                        [scrollViewProxy contentsWillChange];
-
-                        TiUIScrollView* scrollView = (TiUIScrollView*)scrollViewProxy.view;
-                        TiUIScrollViewImpl* scrollViewImpl = [scrollView scrollView];
-
-                        CGPoint scrollBack = [self measureScrollBackForScrollViewProxy:scrollViewProxy];
-
-                        [scrollViewImpl setEasingFunction:easingFunc forKeyPath:@"bounds"];
-
-                        if ([scrollViewImpl contentOffset].y >= scrollBack.y)
-                        {
-                            [scrollViewImpl setContentOffset:scrollBack animated:NO];
-                        }
-                        else if ([TiUtils boolValue:[properties objectForKey:@"ensureViewIsVisible"] def:NO])
-                        {
-                            CGRect proxyFrame = proxy.view.frame;
-
-                            float proxyHeight = proxy.view.bounds.size.height;
-                            float scrollY = [scrollViewImpl contentOffset].y;
-                            float proxyCenterY = proxy.view.frame.origin.y;
-                            float yDiff = scrollBack.y - scrollY;
-
-                            if (yDiff <= proxyHeight && proxyCenterY >= scrollY)
-                            {
-                                float yVisibleOffset = (proxyCenterY - proxyHeight / 2) - scrollY;
-
-                                scrollBack.y = scrollY + yDiff;
-
-                                if (yVisibleOffset < 0)
-                                {
-                                    if (fabsf(yVisibleOffset) < proxyHeight / 2)
-                                    {
-                                        scrollBack.y = (proxyCenterY - proxyHeight / 2) - yVisibleOffset;
-                                    }
-                                    else
-                                    {
-                                        scrollBack.y = proxyCenterY + proxyHeight / 2;
-                                    }
-                                }
-
-                                [scrollViewImpl setContentOffset:scrollBack animated:NO];
-                            }
-                            else
-                            {
-                                [scrollViewImpl scrollRectToVisible:proxyFrame animated:NO];
-                            }
-                        }
+                        parentToAnimate = parentForAnimation;
                     }
                     else
                     {
-                        [proxy.parent layoutChildren:NO];
+                        parentToAnimate = proxy.parent;
                     }
-                }
-                else
-                {
-                    [proxy reposition];
+                    
+                    if (! [parentToAnimate isKindOfClass:[TiUIScrollViewProxy class]])
+                    {
+                        [parentToAnimate layoutChildren:NO];
+                    }
+                    else
+                    {
+                        TiUIScrollViewProxy* scrollViewProxy = (TiUIScrollViewProxy*)parentToAnimate;
+                        TiUIScrollView* scrollView = (TiUIScrollView*)scrollViewProxy.view;
+                        TiUIScrollViewImpl* scrollViewImpl = [scrollView scrollView];
+                        
+                        [[scrollView wrapperView] setEasingFunction:easingFunc forKeyPath:@"frame"];
+                        
+                        [scrollViewProxy contentsWillChange];
+                        [scrollView handleContentSize];
+                    }
                 }
             }
             
@@ -295,63 +289,6 @@ layoutProperties->prop = TiDimensionFromObject(prop);\
     }
 }
 
-- (CGPoint)measureScrollBackForScrollViewProxy:(TiUIScrollViewProxy*)scrollViewProxy
-{
-    TiUIScrollView* scrollView = (TiUIScrollView*)scrollViewProxy.view;
-    TiUIScrollViewImpl* scrollViewImpl = [scrollView scrollView];
-
-    CGSize newContentSize = [scrollViewProxy.view bounds].size;
-    CGFloat scale = [scrollViewImpl zoomScale];
-    TiDimension contentHeight, contentWidth;
-    CGFloat minimumContentHeight;
-
-    object_getInstanceVariable(scrollView, "contentHeight", (void*)&contentHeight);
-    object_getInstanceVariable(scrollView, "contentWidth", (void*)&contentWidth);
-
-    switch (contentWidth.type)
-	{
-		case TiDimensionTypeDip:
-			newContentSize.width = MAX(newContentSize.width,contentWidth.value);
-			break;
-        case TiDimensionTypeUndefined:
-        case TiDimensionTypeAutoSize:
-		case TiDimensionTypeAuto:
-			newContentSize.width = MAX(newContentSize.width, [scrollViewProxy autoWidthForSize:scrollViewProxy.view.bounds.size]);
-			break;
-        case TiDimensionTypeAutoFill:
-		default:
-			break;
-	}
-
-    switch (contentHeight.type)
-    {
-        case TiDimensionTypeDip:
-            minimumContentHeight = contentHeight.value;
-            break;
-        case TiDimensionTypeUndefined:
-        case TiDimensionTypeAutoSize:
-        case TiDimensionTypeAuto:
-            minimumContentHeight = [scrollViewProxy autoHeightForSize:scrollViewProxy.view.bounds.size];
-            break;
-        case TiDimensionTypeAutoFill:
-        default:
-            minimumContentHeight = newContentSize.height;
-            break;
-    }
-
-    CGFloat rightWidth = scale;
-
-    rightWidth *= newContentSize.width;
-    rightWidth -= scrollViewImpl.bounds.size.width + scrollViewImpl.contentInset.right;
-
-    CGFloat bottomHeight = scale;
-
-    bottomHeight *= MAX(newContentSize.height, minimumContentHeight);
-    bottomHeight -= scrollViewImpl.bounds.size.height + scrollViewImpl.contentInset.bottom;
-
-    return CGPointMake(rightWidth, bottomHeight);
-}
-
 - (void)animateDraggable:(TiViewProxy*)parentProxy options:(NSDictionary*)options easing:(AHEasingFunction)easing duration:(double)duration
 {
     id draggableProxy = [parentProxy valueForKey:@"draggable"];
@@ -374,8 +311,8 @@ layoutProperties->prop = TiDimensionFromObject(prop);\
 
                     TiViewProxy* proxy = (TiViewProxy*)[map objectForKey:@"view"];
                     NSNumber* parallaxAmount = [TiUtils numberFromObject:[map objectForKey:@"parallaxAmount"]];
-                    NSNumber* left;
-                    NSNumber* top;
+                    NSNumber* left = nil;
+                    NSNumber* top = nil;
 
                     if ([xKey isKindOfClass:[NSString class]])
                     {
@@ -390,26 +327,37 @@ layoutProperties->prop = TiDimensionFromObject(prop);\
                     if ([yKey isKindOfClass:[NSString class]])
                     {
                         top = [TiUtils numberFromObject:[constraintY objectForKey:[TiUtils stringValue:yKey]]];
-                        top = [NSNumber numberWithFloat:[left floatValue] / [parallaxAmount floatValue]];
+                        top = [NSNumber numberWithFloat:[top floatValue] / [parallaxAmount floatValue]];
                     }
                     else if ([yKey isKindOfClass:[NSNumber class]])
                     {
                         top = [TiUtils numberFromObject:yKey];
                     }
-
+                    
+                    [proxy.view setOpaque:YES];
+                    
                     [UIView animateWithDuration:duration
                                      animations:^{
                                          [proxy.view setEasingFunction:easing forKeyPath:@"position"];
-
-                                         LayoutConstraint* layoutProperties = [proxy layoutProperties];
-
-                                         ENSURE_LAYOUT_PROPERTY(left);
-                                         ENSURE_LAYOUT_PROPERTY(top);
-
-                                         [proxy reposition];
+                                         
+                                         CGRect oldFrame = [proxy.view frame];
+                                         CGRect newFrame = CGRectMake([left floatValue],
+                                                                      [top floatValue],
+                                                                      oldFrame.size.width,
+                                                                      oldFrame.size.height);
+                                         
+                                         [proxy.view setFrame:newFrame];
                                      }
                                      completion:^(BOOL finished) {
+                                         LayoutConstraint* layoutProperties = [proxy layoutProperties];
+                                         
+                                         ENSURE_LAYOUT_PROPERTY(left);
+                                         ENSURE_LAYOUT_PROPERTY(top);
+                                         
+                                         object_setInstanceVariable(proxy, "_layoutProperties", &layoutProperties);
+                                         
                                          [proxy.view removeEasingFunctionForKeyPath:@"position"];
+                                         [proxy.view setOpaque:NO];
                                      }];
                 }
             }];
