@@ -18,7 +18,6 @@
  */
 package com.animecyc.animator;
 
-import org.appcelerator.kroll.common.Log;
 import org.appcelerator.titanium.TiC;
 import org.appcelerator.titanium.TiDimension;
 import org.appcelerator.titanium.proxy.TiViewProxy;
