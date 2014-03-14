@@ -230,7 +230,7 @@ static BOOL Swizzled = NO;
         
     }
     
-    CAAnimation *override;
+    CAAnimation *override = nil;
     
     CABasicAnimation *basicAnimation = (CABasicAnimation *)anim;
     
