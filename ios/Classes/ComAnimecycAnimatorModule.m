@@ -34,8 +34,6 @@
 
 - (void)animate:(id)args
 {
-    ENSURE_UI_THREAD_1_ARG(args);
-
     TiViewProxy* proxy = nil;
     NSDictionary* properties = nil;
     KrollCallback* callback = nil;
@@ -43,10 +41,28 @@
     ENSURE_ARG_AT_INDEX(proxy, args, 0, TiViewProxy);
     ENSURE_ARG_OR_NIL_AT_INDEX(properties, args, 1, NSDictionary);
     ENSURE_ARG_OR_NIL_AT_INDEX(callback, args, 2, KrollCallback);
+    
+    NSNumber *delay = [TiUtils numberFromObject:[properties objectForKey:@"delay"]];
+    
+    delay = (delay != nil ? delay : NUMINT(0));
+    
+    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, ([delay doubleValue] / 1000) * NSEC_PER_SEC), dispatch_get_main_queue(), ^{
+        AnimationFactory* animation = [[[AnimationFactory alloc] init] autorelease];
+        
+        [animation animateUsingProxy:proxy andProperties:properties completed:callback];
+    });
+}
 
-    AnimationFactory* animation = [[[AnimationFactory alloc] init] autorelease];
-
-    [animation animateUsingProxy:proxy andProperties:properties completed:callback];
+- (void)animationTransaction:(id)transaction
+{
+    ENSURE_SINGLE_ARG(transaction, KrollCallback);
+    
+    if (transaction != nil)
+    {
+        [CATransaction begin];
+        [transaction call:nil thisObject:nil];
+        [CATransaction commit];
+    }
 }
 
 MAKE_SYSTEM_PROP(LINEAR, EASING_LINEAR);

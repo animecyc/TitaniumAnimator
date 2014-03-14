@@ -16,173 +16,167 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-#import <objc/runtime.h>
 #import "AnimationFactory.h"
-#import "KrollCallback.h"
-#import "UIView+EasingFunctions.h"
-#import "CAKeyframeAnimation+AHEasing.h"
-#import "TiUIScrollView.h"
-#import "TiUIScrollViewProxy.h"
+
+@implementation TiViewProxy (TiViewProxyAnimationFactory)
+
+- (BOOL)isAnimating
+{
+    return [TiUtils boolValue:[self valueForKey:@"__animating"] def:NO];
+}
+
+- (void)setAnimating:(BOOL)animating
+{
+    [self setValue:NUMBOOL(animating) forKey:@"__animating"];
+}
+
+@end
 
 @implementation AnimationFactory
 
-typedef void (^ CallbackBlock)(void);
-
-#define ENSURE_LAYOUT_PROPERTY(prop)\
-{\
-if (prop && layoutProperties)\
-{\
-layoutProperties->prop = TiDimensionFromObject(prop);\
-}\
-}
-
-- (void)animateUsingProxy:(TiViewProxy*)proxy andProperties:(NSDictionary*)properties completed:(KrollCallback*)completed
+- (void)animateUsingProxy:(TiViewProxy *)proxy andProperties:(NSDictionary *)properties completed:(KrollCallback *)callback
 {
-    NSNumber* left = [properties objectForKey:@"left"];
-    NSNumber* right = [properties objectForKey:@"right"];
-    NSNumber* top = [properties objectForKey:@"top"];
-    NSNumber* bottom = [properties objectForKey:@"bottom"];
-    NSNumber* width = [properties objectForKey:@"width"];
-    NSNumber* height = [properties objectForKey:@"height"];
-    NSNumber* opacity = [properties objectForKey:@"opacity"];
-    NSNumber* rotate = [properties objectForKey:@"rotate"];
-    TiProxy* transform = [properties objectForKey:@"transform"];
-    TiColor* color = [TiUtils colorValue:[properties objectForKey:@"color"]];
-    TiColor* backgroundColor = [TiUtils colorValue:[properties objectForKey:@"backgroundColor"]];
-    NSNumber* duration = [properties objectForKey:@"duration"];
-    NSNumber* easing = [properties objectForKey:@"easing"];
-    BOOL animateSiblings = [TiUtils boolValue:[properties objectForKey:@"siblings"] def:NO];
+    if ([proxy isAnimating])
+    {
+        return;
+    }
+    
+    [proxy setAnimating:YES];
+    
+    // Dimensions
+    
+    NSNumber *left = [TiUtils numberFromObject:[properties objectForKey:@"left"]];
+    NSNumber *right = [TiUtils numberFromObject:[properties objectForKey:@"right"]];
+    NSNumber *top = [TiUtils numberFromObject:[properties objectForKey:@"top"]];
+    NSNumber *bottom = [TiUtils numberFromObject:[properties objectForKey:@"bottom"]];
+    NSNumber *width = [TiUtils numberFromObject:[properties objectForKey:@"width"]];
+    NSNumber *height = [TiUtils numberFromObject:[properties objectForKey:@"height"]];
+    
+    // Cosmentic
+    
+    NSNumber *opacity = [TiUtils numberFromObject:[properties objectForKey:@"opacity"]];
+    NSNumber *rotate = [TiUtils numberFromObject:[properties objectForKey:@"rotate"]];
+    TiColor *color = [TiUtils colorValue:[properties objectForKey:@"color"]];
+    TiColor *backgroundColor = [TiUtils colorValue:[properties objectForKey:@"backgroundColor"]];
+    TiProxy *transform = [properties objectForKey:@"transform"];
+    
+    // Options
+    
+    NSNumber *duration = [TiUtils numberFromObject:[properties objectForKey:@"duration"]];
+    NSNumber *easing = [TiUtils numberFromObject:[properties objectForKey:@"easing"]];
+    TiViewProxy *parent = [properties objectForKey:@"parentForAnimation"];
+    BOOL siblings = [TiUtils boolValue:[properties objectForKey:@"siblings"] def:NO];
     BOOL opaque = [TiUtils boolValue:[properties objectForKey:@"opaque"] def:NO];
-    TiViewProxy* parentForAnimation = [properties objectForKey:@"parentForAnimation"];
-    TiViewProxy* parentToAnimate;
+    BOOL originalOpaque = [proxy.view isOpaque];
     
-    if (animateSiblings)
-    {
-        if ([parentForAnimation isKindOfClass:[TiViewProxy class]])
-        {
-            parentToAnimate = parentForAnimation;
-        }
-        else
-        {
-            parentToAnimate = proxy.parent;
-        }
-    }
-
-    if (duration == nil)
-    {
-        duration = [NSNumber numberWithInteger:1000];
-    }
-
-    if (easing == nil)
-    {
-        easing = [NSNumber numberWithInteger:EASING_LINEAR];
-    }
-
-    double duration_ = [duration doubleValue] / 1000;
+    // Ensure required values have defaults
+    
+    duration = (duration != nil ? duration : NUMINT(1000));
+    easing = (easing != nil ? easing : NUMINT(EASING_LINEAR));
+    opaque = opacity != nil && [opacity floatValue] < 1 ? NO : opaque;
+    
     AHEasingFunction easingFunc = [self getEasingFunc:easing];
+    double animationDuration = ([duration doubleValue] / 1000);
     
-    if (opaque)
-    {
-        [proxy.view setOpaque:YES];
-    }
+    // Given the above setting `opaque` to YES
+    // can give us a more performant animation
+    
+    [proxy.view setOpaque:opaque];
     
     [CATransaction begin];
-    [CATransaction setValue:[NSNumber numberWithDouble:duration_] forKey:kCATransactionAnimationDuration];
-    [CATransaction setCompletionBlock:^{
-        if (top || left || bottom || right || width || height)
-        {
-            [proxy.parent.children enumerateObjectsUsingBlock:^(id obj, NSUInteger idx, BOOL *stop) {
-                TiViewProxy* sibling = (TiViewProxy*)obj;
-                
-                if (! [proxy isEqual:sibling])
-                {
-                    [sibling.view removeEasingFunctionForKeyPath:@"position"];
-                }
-                else
-                {
-                    [sibling.view removeEasingFunctionForKeyPath:@"frame"];
-                }
-            }];
-            
-            if (top)
-            {
-                [proxy replaceValue:top forKey:@"top" notification:NO];
-            }
-            
-            if (left)
-            {
-                [proxy replaceValue:left forKey:@"left" notification:NO];
-            }
-            
-            if (bottom)
-            {
-                [proxy replaceValue:bottom forKey:@"bottom" notification:NO];
-            }
-            
-            if (right)
-            {
-                [proxy replaceValue:right forKey:@"right" notification:NO];
-            }
-            
-            if (width)
-            {
-                [proxy replaceValue:width forKey:@"width" notification:NO];
-            }
-            
-            if (height)
-            {
-                [proxy replaceValue:height forKey:@"height" notification:NO];
-            }
-        }
-        
-        if (transform)
-        {
-            [proxy.view removeEasingFunctionForKeyPath:@"transform"];
-        }
-        
-        if (opacity)
-        {
-            [proxy.view removeEasingFunctionForKeyPath:@"alpha"];
-        }
-        
-        if (backgroundColor)
-        {
-            [proxy.view removeEasingFunctionForKeyPath:@"backgroundColor"];
-        }
-        
-        if ([parentToAnimate isKindOfClass:[TiUIScrollViewProxy class]])
-        {
-            TiUIScrollViewProxy* scrollViewProxy = (TiUIScrollViewProxy*)parentToAnimate;
-            TiUIScrollView* scrollView = (TiUIScrollView*)scrollViewProxy.view;
-            
-            [[scrollView wrapperView] removeEasingFunctionForKeyPath:@"frame"];
-
-        }
-        
-        if (opaque)
-        {
-            [proxy.view setOpaque:NO];
-        }
-        
-        if (completed)
-        {
-            [proxy _fireEventToListener:@"animated" withObject:nil listener:completed thisObject:proxy];
-        }
-    }];
+    [CATransaction setValue:[NSNumber numberWithDouble:animationDuration] forKey:kCATransactionAnimationDuration];
+    [CATransaction setCompletionBlock:^
+     {
+         if (top != nil || left != nil || bottom != nil || right != nil || width != nil || height != nil)
+         {
+             if (siblings)
+             {
+                 TiViewProxy *parentToAnimate = nil;
+                 
+                 if ([parent isKindOfClass:[TiViewProxy class]])
+                 {
+                     parentToAnimate = parent;
+                 }
+                 else
+                 {
+                     parentToAnimate = proxy.parent;
+                 }
+                 
+                 if (proxy.parent != parentToAnimate)
+                 {
+                     [proxy.parent.children enumerateObjectsUsingBlock:^(id obj, NSUInteger idx, BOOL *stop)
+                      {
+                          TiViewProxy *sibling = (TiViewProxy *)obj;
+                          
+                          [sibling.view setClipsToBounds:YES];
+                          [sibling.view removeEasingFunctionForKeyPath:@"frame"];
+                      }];
+                 }
+                 
+                 [parentToAnimate.children enumerateObjectsUsingBlock:^(id obj, NSUInteger idx, BOOL *stop)
+                  {
+                      TiViewProxy *sibling = (TiViewProxy *)obj;
+                      
+                      [sibling.view setClipsToBounds:YES];
+                      [sibling.view removeEasingFunctionForKeyPath:@"frame"];
+                  }];
+                 
+                 [proxy.children enumerateObjectsUsingBlock:^(id obj, NSUInteger idx, BOOL *stop)
+                  {
+                      TiViewProxy *sibling = (TiViewProxy *)obj;
+                      
+                      if (! [sibling isAnimating])
+                      {
+                          [sibling.view setEasingFunction:easingFunc forKeyPath:@"frame"];
+                      }
+                  }];
+                 
+                 if ([parentToAnimate isKindOfClass:[TiUIScrollViewProxy class]])
+                 {
+                     TiUIScrollViewProxy *scrollViewProxy = (TiUIScrollViewProxy *)parentToAnimate;
+                     TiUIScrollView *scrollView = (TiUIScrollView *)[scrollViewProxy view];
+                     
+                     [[scrollView wrapperView] removeEasingFunctionForKeyPath:@"frame"];
+                 }
+             }
+             else
+             {
+                 [proxy.view removeEasingFunctionForKeyPath:@"frame"];
+             }
+             
+             if (top != nil) { [proxy replaceValue:top forKey:@"top" notification:NO]; }
+             if (left != nil) { [proxy replaceValue:left forKey:@"left" notification:NO]; }
+             if (bottom != nil) { [proxy replaceValue:bottom forKey:@"bottom" notification:NO]; }
+             if (right != nil) { [proxy replaceValue:right forKey:@"right" notification:NO]; }
+             if (width != nil) { [proxy replaceValue:width forKey:@"width" notification:NO]; }
+             if (height != nil) { [proxy replaceValue:height forKey:@"height" notification:NO]; }
+         }
+         
+         if (transform != nil) { [proxy.view removeEasingFunctionForKeyPath:@"transform"]; }
+         if (opacity != nil) { [proxy.view removeEasingFunctionForKeyPath:@"alpha"]; };
+         if (backgroundColor != nil) { [proxy.view removeEasingFunctionForKeyPath:@"backgroundColor"]; }
+         
+         [proxy.view setOpaque:originalOpaque];
+         [proxy setAnimating:NO];
+         
+         if (callback != nil) { [proxy _fireEventToListener:@"animated" withObject:nil listener:callback thisObject:proxy]; }
+     }];
     
-    if (rotate)
+    if (rotate != nil)
     {
         double rotateFrom = degreesToRadians([[proxy valueForKey:@"__rotation"] floatValue]);
         double rotateTo = rotateFrom + degreesToRadians([rotate floatValue]);
         
-        CAKeyframeAnimation* rotateAnimation = [CAKeyframeAnimation animationWithKeyPath:@"transform.rotation.z"
-                                                                                function:easingFunc
-                                                                               fromValue:rotateFrom
-                                                                                 toValue:rotateTo];
+        CAKeyframeAnimation *rotateAnimation = [CAKeyframeAnimation
+                                                animationWithKeyPath:@"transform.rotation.z"
+                                                function:easingFunc
+                                                fromValue:rotateFrom
+                                                toValue:rotateTo];
         
-        rotateAnimation.duration = duration_;
+        [rotateAnimation setDuration:animationDuration];
+        
         [proxy.view.layer addAnimation:rotateAnimation forKey:@"rotation"];
-
+        
         if (fmodf(radiansToDegrees(rotateTo), 360) == 0)
         {
             [proxy setValue:[NSNumber numberWithInteger:0] forKey:@"__rotation"];
@@ -191,36 +185,36 @@ layoutProperties->prop = TiDimensionFromObject(prop);\
         {
             [proxy setValue:[NSNumber numberWithDouble:radiansToDegrees(rotateTo)] forKey:@"__rotation"];
         }
-
+        
         [proxy.view setVirtualParentTransform:CGAffineTransformRotate([proxy.view transform], rotateTo - rotateFrom)];
     }
-
-    // If the label being animated has an appropriate CATextLayer
-    // attached to it and responds to the setTextColor the below
-    // should animate as expected. At this time there is no support
-    // for any of the easing functions
-
-    if (color)
+    
+    if (color != nil)
     {
-        [CATransaction setValue:[NSNumber numberWithDouble:duration_] forKey:kCATransactionAnimationDuration];
-
+        // If the label being animated has an appropriate CATextLayer
+        // attached to it and responds to the setTextColor the below
+        // should animate as expected. At this time there is no support
+        // for any of the easing functions
+        
         [proxy setValue:color forKey:@"color"];
     }
-
-    if (transform || top || left || bottom || right || width || height || opacity || backgroundColor || color)
+    
+    if (transform != nil || top != nil || left != nil || bottom != nil ||
+        right != nil || width != nil || height != nil || opacity != nil ||
+        backgroundColor != nil || color != nil)
     {
-        [UIView animateWithDuration:duration_ animations:^{
-            if (transform)
+        UIViewAnimationOptions animationOptions = UIViewAnimationOptionBeginFromCurrentState;
+        
+        [UIView animateWithDuration:animationDuration delay:0 options:animationOptions animations:^{
+            if (transform != nil)
             {
                 [proxy.view setEasingFunction:easingFunc forKeyPath:@"transform"];
                 [proxy.view setTransform_:transform];
             }
             
-            if (top || left || bottom || right || width || height)
+            if (top != nil || left != nil || bottom != nil || right != nil || width != nil || height != nil)
             {
-                [proxy.view setEasingFunction:easingFunc forKeyPath:@"frame"];
-                
-                LayoutConstraint* layoutProperties = [proxy layoutProperties];
+                LayoutConstraint *layoutProperties = [proxy layoutProperties];
                 
                 ENSURE_LAYOUT_PROPERTY(left);
                 ENSURE_LAYOUT_PROPERTY(right);
@@ -231,89 +225,122 @@ layoutProperties->prop = TiDimensionFromObject(prop);\
                 
                 object_setInstanceVariable(proxy, "_layoutProperties", &layoutProperties);
                 
-                [proxy relayout];
-                
-                if (animateSiblings)
+                if (siblings)
                 {
-                    TiViewProxy* parentToAnimate;
+                    TiViewProxy *parentToAnimate = nil;
                     
-                    if ([parentForAnimation isKindOfClass:[TiViewProxy class]])
+                    if ([parent isKindOfClass:[TiViewProxy class]])
                     {
-                        parentToAnimate = parentForAnimation;
+                        parentToAnimate = parent;
                     }
                     else
                     {
                         parentToAnimate = proxy.parent;
                     }
                     
-                    if (! [parentToAnimate isKindOfClass:[TiUIScrollViewProxy class]])
+                    if (proxy.parent != parentToAnimate)
                     {
-                        [parentToAnimate layoutChildren:NO];
+                        [proxy.parent.children enumerateObjectsUsingBlock:^(id obj, NSUInteger idx, BOOL *stop)
+                         {
+                             TiViewProxy *sibling = (TiViewProxy *)obj;
+                             
+                             [sibling.view setClipsToBounds:NO];
+                             [sibling.view setEasingFunction:easingFunc forKeyPath:@"frame"];
+                         }];
                     }
-                    else
+                    
+                    [parentToAnimate.children enumerateObjectsUsingBlock:^(id obj, NSUInteger idx, BOOL *stop)
+                     {
+                         TiViewProxy *sibling = (TiViewProxy *)obj;
+                         
+                         [sibling.view setClipsToBounds:NO];
+                         [sibling.view setEasingFunction:easingFunc forKeyPath:@"frame"];
+                     }];
+                    
+                    [proxy.children enumerateObjectsUsingBlock:^(id obj, NSUInteger idx, BOOL *stop)
+                     {
+                         TiViewProxy *sibling = (TiViewProxy *)obj;
+                         
+                         if (! [sibling isAnimating])
+                         {
+                             [sibling.view setEasingFunction:easingFunc forKeyPath:@"frame"];
+                         }
+                     }];
+                    
+                    if ([parentToAnimate isKindOfClass:[TiUIScrollViewProxy class]])
                     {
-                        TiUIScrollViewProxy* scrollViewProxy = (TiUIScrollViewProxy*)parentToAnimate;
-                        TiUIScrollView* scrollView = (TiUIScrollView*)scrollViewProxy.view;
-                        TiUIScrollViewImpl* scrollViewImpl = [scrollView scrollView];
+                        TiUIScrollViewProxy *scrollViewProxy = (TiUIScrollViewProxy *)parentToAnimate;
+                        TiUIScrollView *scrollView = (TiUIScrollView *)[scrollViewProxy view];
                         
                         [[scrollView wrapperView] setEasingFunction:easingFunc forKeyPath:@"frame"];
-                        
                         [scrollViewProxy contentsWillChange];
                         [scrollView handleContentSize];
                     }
+                    else if (parentToAnimate != nil)
+                    {
+                        [parentToAnimate layoutChildren:NO];
+                    }
+                }
+                else
+                {
+                    [proxy.view setEasingFunction:easingFunc forKeyPath:@"frame"];
+                    [proxy relayout];
                 }
             }
             
-            if (opacity)
+            if (opacity != nil)
             {
                 [proxy.view setEasingFunction:easingFunc forKeyPath:@"alpha"];
                 [proxy setValue:opacity forKey:@"opacity"];
             }
             
-            if (backgroundColor)
+            if (backgroundColor != nil)
             {
                 [proxy.view setEasingFunction:easingFunc forKeyPath:@"backgroundColor"];
                 [proxy setValue:backgroundColor forKey:@"backgroundColor"];
             }
-        }];
+        } completion:nil];
+    }
+    
+    id draggable = [properties objectForKey:@"draggable"];
+    
+    if ([draggable isKindOfClass:[NSDictionary class]])
+    {
+        [self animateDraggable:proxy
+                       options:draggable
+                        easing:easingFunc
+                      duration:animationDuration];
     }
     
     [CATransaction commit];
-
-    if ([[properties objectForKey:@"draggable"] isKindOfClass:[NSDictionary class]])
-    {
-        [self animateDraggable:proxy
-                       options:[properties objectForKey:@"draggable"]
-                        easing:[self getEasingFunc:easing]
-                      duration:duration_];
-    }
 }
 
-- (void)animateDraggable:(TiViewProxy*)parentProxy options:(NSDictionary*)options easing:(AHEasingFunction)easing duration:(double)duration
+- (void)animateDraggable:(TiViewProxy *)parentProxy options:(NSDictionary *)options
+                  easing:(AHEasingFunction)easing duration:(double)duration
 {
     id draggableProxy = [parentProxy valueForKey:@"draggable"];
-
+    
     if ([draggableProxy isKindOfClass:[TiProxy class]])
     {
         id mappedViews = [draggableProxy valueForKey:@"maps"];
-
+        
         if ([mappedViews isKindOfClass:[NSArray class]])
         {
             [mappedViews enumerateObjectsUsingBlock:^(id map, NSUInteger idx, BOOL *stop) {
                 if ([[map objectForKey:@"view"] isKindOfClass:[TiViewProxy class]])
                 {
-                    NSDictionary* constraints = [map objectForKey:@"constrain"];
-                    NSDictionary* constraintX = [constraints objectForKey:@"x"];
-                    NSDictionary* constraintY = [constraints objectForKey:@"y"];
-
+                    NSDictionary *constraints = [map objectForKey:@"constrain"];
+                    NSDictionary *constraintX = [constraints objectForKey:@"x"];
+                    NSDictionary *constraintY = [constraints objectForKey:@"y"];
+                    
                     id xKey = [options objectForKey:@"x"];
                     id yKey = [options objectForKey:@"y"];
-
-                    TiViewProxy* proxy = (TiViewProxy*)[map objectForKey:@"view"];
-                    NSNumber* parallaxAmount = [TiUtils numberFromObject:[map objectForKey:@"parallaxAmount"]];
-                    NSNumber* left = nil;
-                    NSNumber* top = nil;
-
+                    
+                    TiViewProxy *proxy = (TiViewProxy*)[map objectForKey:@"view"];
+                    NSNumber *parallaxAmount = [TiUtils numberFromObject:[map objectForKey:@"parallaxAmount"]];
+                    NSNumber *left = nil;
+                    NSNumber *top = nil;
+                    
                     if ([xKey isKindOfClass:[NSString class]])
                     {
                         left = [TiUtils numberFromObject:[constraintX objectForKey:[TiUtils stringValue:xKey]]];
@@ -323,7 +350,7 @@ layoutProperties->prop = TiDimensionFromObject(prop);\
                     {
                         left = [TiUtils numberFromObject:xKey];
                     }
-
+                    
                     if ([yKey isKindOfClass:[NSString class]])
                     {
                         top = [TiUtils numberFromObject:[constraintY objectForKey:[TiUtils stringValue:yKey]]];
@@ -336,38 +363,39 @@ layoutProperties->prop = TiDimensionFromObject(prop);\
                     
                     [proxy.view setOpaque:YES];
                     
-                    [UIView animateWithDuration:duration
-                                     animations:^{
-                                         [proxy.view setEasingFunction:easing forKeyPath:@"position"];
-                                         
-                                         CGRect oldFrame = [proxy.view frame];
-                                         CGRect newFrame = CGRectMake([left floatValue],
-                                                                      [top floatValue],
-                                                                      oldFrame.size.width,
-                                                                      oldFrame.size.height);
-                                         
-                                         [proxy.view setFrame:newFrame];
-                                     }
-                                     completion:^(BOOL finished) {
-                                         LayoutConstraint* layoutProperties = [proxy layoutProperties];
-                                         
-                                         ENSURE_LAYOUT_PROPERTY(left);
-                                         ENSURE_LAYOUT_PROPERTY(top);
-                                         
-                                         object_setInstanceVariable(proxy, "_layoutProperties", &layoutProperties);
-                                         
-                                         [proxy.view removeEasingFunctionForKeyPath:@"position"];
-                                         [proxy.view setOpaque:NO];
-                                     }];
+                    [UIView animateWithDuration:duration animations:
+                     ^{
+                         [proxy.view setEasingFunction:easing forKeyPath:@"position"];
+                         
+                         CGRect oldFrame = [proxy.view frame];
+                         CGRect newFrame = CGRectMake([left floatValue],
+                                                      [top floatValue],
+                                                      oldFrame.size.width,
+                                                      oldFrame.size.height);
+                         
+                         [proxy.view setFrame:newFrame];
+                     } completion:^(BOOL finished)
+                     {
+                         LayoutConstraint *layoutProperties = [proxy layoutProperties];
+                         
+                         ENSURE_LAYOUT_PROPERTY(left);
+                         ENSURE_LAYOUT_PROPERTY(top);
+                         
+                         object_setInstanceVariable(proxy, "_layoutProperties", &layoutProperties);
+                         
+                         [proxy.view removeEasingFunctionForKeyPath:@"position"];
+                         [proxy.view setOpaque:NO];
+                     }];
                 }
             }];
         }
     }
 }
 
-- (AHEasingFunction)getEasingFunc:(NSNumber*)easingType
+- (AHEasingFunction)getEasingFunc:(NSNumber *)easingType
 {
-    switch ([easingType integerValue]) {
+    switch ([easingType integerValue])
+    {
         case EASING_QUAD_IN:
             return QuadraticEaseIn;
             break;
