@@ -1,4 +1,4 @@
-version: 1.0.10
+version: 1.1.0
 apiversion: 2
 description: A drop-in animation replacement for Titanium
 author: Seth Benjamin
