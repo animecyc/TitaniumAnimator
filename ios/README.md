@@ -1,6 +1,8 @@
 # TitaniumAnimator
 
-A drop-in animation replacement for Titanium. This module's aim is to mimick as much of the Titanium animation module as possible with the addition of new timing functions and better performance. As of right now the only properties that can be animated are: `rotate`, `transform`, `top`, `bottom`, `left`, `right`, `width`, `height`, `opacity`, `color` and `backgroundColor`. The `transform` property are not support by Android at this time.
+A drop-in animation replacement for Titanium. This module's aim is to mimick as much of the Titanium animation module as possible with the addition of new timing functions and better performance. As of right now the only properties that can be animated are: `rotate`, `transform`, `top`, `bottom`, `left`, `right`, `width`, `height`, `opacity`, `color` and `backgroundColor`. The `transform` property is not supported by Android at this time.
+
+For performance reasons iOS has a special boolean property called `opaque` which can be set to `true`. If you are animating views that don't contain any sort of transparency you will see performance gains when animating large or otherwise complex view groups.
 
 ## Support
 
@@ -52,9 +54,9 @@ If you need to perform a rotation you can pass the `rotate` property which accep
 
 Once a rotation has been performed subsequent rotations will be performed from its last rotation angle. To simplify multiple rotations you can pass values > 360. For example to do two complete rotations you can pass a value of 720.
 
-## Text Color (iOS)
+## Text Color
 
-In order to animate the text color of a Ti.UI.Label you must use a compatiable label replacement. You can get a simple version here: [TitaniumCoreLabel](https://github.com/animecyc/TitaniumCoreLabel).
+In order to animate the text color of a Ti.UI.Label on iOS you must use a compatiable label replacement. You can get a simple version here: [TitaniumCoreLabel](https://github.com/animecyc/TitaniumCoreLabel).
 
 ```javascript
 var CoreLabel = require('com.animecyc.corelabel'),
@@ -74,13 +76,27 @@ Animator.animate(testLabel, {
 
 > The only property that can be animated on a label created via CoreLabel is the `color` property. The `font` property is forthcoming.
 
-## Layout Support (iOS)
+## Layout Support
 
-When animating views in a horizontal or vertical layout sibling views will *pop* into place as opposed to animating to the correct position. You can pass the `siblings` flag to the animation properties to ensure that all sibling views animate to their correct location. By default this flag is set to `false`.
+When animating views on iOS in a horizontal or vertical layout sibling views will *pop* into place as opposed to animating to the correct position. You can pass the `siblings` flag to the animation properties to ensure that all sibling views animate to their correct location. By default this flag is set to `false`.
 
-> There is the possibility of a hit in performace when animating large quantities of sibling views together.
+When animating a complex layout (such as a vertical layout inside a vertical layout) it may be necessary to specify which parent to propogate the animimations from, you can do this by setting `parentForAnimation` and passing the proxy that holds the views that should animate. This is especially useful in cases where you are animating inside of a `Ti.UI.ScrollView`.
 
-## [TiDraggable](https://github.com/animecyc/TiDraggable) Support (iOS)
+> There is the possibility of a hit in performace when animating large quantities of sibling views together especially on iOS6.
+
+## Animation Batching (iOS only)
+
+When animating large amounts of views the UI can become unresponsive. This can be avoided in most situations by wrapping the animating proxies in a transaction.
+
+```javascript
+Animator.animationTransaction(function () {
+	Animator.animate( ... );
+	Animator.animate( ... );
+	Animator.animate( ... );
+});
+```
+
+## [TiDraggable](https://github.com/animecyc/TiDraggable) Support (iOS only)
 
 If the view you're animating is a view touched by [TiDraggable](https://github.com/animecyc/TiDraggable) module you can perform a tandem animation; All attached proxies will be animated at the same time within the supplied constraints.
 
