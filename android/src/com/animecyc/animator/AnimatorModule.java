@@ -267,7 +267,7 @@ public class AnimatorModule extends KrollModule
 	@Kroll.method
 	public void animate(final TiViewProxy proxy, final KrollDict props, @Kroll.argument(optional=true) final KrollFunction callback)
 	{
-		if (! this.isAnimating(proxy))
+		if (proxy != null && proxy.peekView() != null && ! this.isAnimating(proxy))
 		{
 			final AnimatorModule self = this;
 			final KrollDict animationProps = new KrollDict(props);
