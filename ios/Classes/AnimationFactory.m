@@ -36,21 +36,26 @@
 
 - (void)animateUsingProxy:(TiViewProxy *)proxy andProperties:(NSDictionary *)properties completed:(KrollCallback *)callback
 {
-    if ([proxy isAnimating])
+    BOOL allowTouches = [TiUtils boolValue:[properties objectForKey:@"allowTouches"] def:NO];
+    
+    if (! allowTouches && [proxy isAnimating])
     {
         return;
+    }
+    else if(allowTouches && [proxy isAnimating]) {
+        [proxy.view.layer removeAllAnimations];
     }
     
     [proxy setAnimating:YES];
     
     // Dimensions
     
-    NSNumber *left = [TiUtils numberFromObject:[properties objectForKey:@"left"]];
-    NSNumber *right = [TiUtils numberFromObject:[properties objectForKey:@"right"]];
-    NSNumber *top = [TiUtils numberFromObject:[properties objectForKey:@"top"]];
-    NSNumber *bottom = [TiUtils numberFromObject:[properties objectForKey:@"bottom"]];
-    NSNumber *width = [TiUtils numberFromObject:[properties objectForKey:@"width"]];
-    NSNumber *height = [TiUtils numberFromObject:[properties objectForKey:@"height"]];
+    TiDimension left = [TiUtils dimensionValue:@"left" properties:properties def:TiDimensionUndefined];
+    TiDimension right = [TiUtils dimensionValue:@"right" properties:properties def:TiDimensionUndefined];
+    TiDimension top = [TiUtils dimensionValue:@"top" properties:properties def:TiDimensionUndefined];
+    TiDimension bottom = [TiUtils dimensionValue:@"bottom" properties:properties def:TiDimensionUndefined];
+    TiDimension width = [TiUtils dimensionValue:@"width" properties:properties def:TiDimensionUndefined];
+    TiDimension height = [TiUtils dimensionValue:@"height" properties:properties def:TiDimensionUndefined];
     
     // Cosmentic
     
@@ -87,7 +92,7 @@
     [CATransaction setValue:[NSNumber numberWithDouble:animationDuration] forKey:kCATransactionAnimationDuration];
     [CATransaction setCompletionBlock:^
      {
-         if (top != nil || left != nil || bottom != nil || right != nil || width != nil || height != nil)
+         if (!TiDimensionIsUndefined(top) || !TiDimensionIsUndefined(left) || !TiDimensionIsUndefined(bottom) || !TiDimensionIsUndefined(right) || !TiDimensionIsUndefined(width) || !TiDimensionIsUndefined(height))
          {
              if (siblings)
              {
@@ -144,22 +149,22 @@
                  [proxy.view removeEasingFunctionForKeyPath:@"frame"];
              }
              
-             if (top != nil) { [proxy replaceValue:top forKey:@"top" notification:NO]; }
-             if (left != nil) { [proxy replaceValue:left forKey:@"left" notification:NO]; }
-             if (bottom != nil) { [proxy replaceValue:bottom forKey:@"bottom" notification:NO]; }
-             if (right != nil) { [proxy replaceValue:right forKey:@"right" notification:NO]; }
-             if (width != nil) { [proxy replaceValue:width forKey:@"width" notification:NO]; }
-             if (height != nil) { [proxy replaceValue:height forKey:@"height" notification:NO]; }
+             if (!TiDimensionIsUndefined(top)) [proxy replaceValue:[properties objectForKey:@"top"] forKey:@"top" notification:NO];
+             if (!TiDimensionIsUndefined(left)) [proxy replaceValue:[properties objectForKey:@"left"] forKey:@"left" notification:NO];
+             if (!TiDimensionIsUndefined(bottom)) [proxy replaceValue:[properties objectForKey:@"bottom"] forKey:@"bottom" notification:NO];
+             if (!TiDimensionIsUndefined(right)) [proxy replaceValue:[properties objectForKey:@"right"] forKey:@"right" notification:NO];
+             if (!TiDimensionIsUndefined(width)) [proxy replaceValue:[properties objectForKey:@"width"] forKey:@"width" notification:NO];
+             if (!TiDimensionIsUndefined(height)) [proxy replaceValue:[properties objectForKey:@"height"] forKey:@"height" notification:NO];
          }
          
-         if (transform != nil) { [proxy.view removeEasingFunctionForKeyPath:@"transform"]; }
-         if (opacity != nil) { [proxy.view removeEasingFunctionForKeyPath:@"alpha"]; };
-         if (backgroundColor != nil) { [proxy.view removeEasingFunctionForKeyPath:@"backgroundColor"]; }
+         if (transform != nil) [proxy.view removeEasingFunctionForKeyPath:@"transform"];
+         if (opacity != nil) [proxy.view removeEasingFunctionForKeyPath:@"alpha"];
+         if (backgroundColor != nil) [proxy.view removeEasingFunctionForKeyPath:@"backgroundColor"];
          
          [proxy.view setOpaque:originalOpaque];
          [proxy setAnimating:NO];
          
-         if (callback != nil) { [proxy _fireEventToListener:@"animated" withObject:nil listener:callback thisObject:proxy]; }
+         if (callback != nil) [proxy _fireEventToListener:@"animated" withObject:nil listener:callback thisObject:proxy];
      }];
     
     if (rotate != nil)
@@ -199,11 +204,13 @@
         [proxy setValue:color forKey:@"color"];
     }
     
-    if (transform != nil || top != nil || left != nil || bottom != nil ||
-        right != nil || width != nil || height != nil || opacity != nil ||
-        backgroundColor != nil || color != nil)
+    if (transform != nil || !TiDimensionIsUndefined(top) || !TiDimensionIsUndefined(left) ||
+        !TiDimensionIsUndefined(bottom) || !TiDimensionIsUndefined(right) || !TiDimensionIsUndefined(width) ||
+        !TiDimensionIsUndefined(height) || opacity != nil || backgroundColor != nil || color != nil)
     {
         UIViewAnimationOptions animationOptions = UIViewAnimationOptionBeginFromCurrentState;
+        
+        if(allowTouches) animationOptions |= UIViewKeyframeAnimationOptionAllowUserInteraction;
         
         [UIView animateWithDuration:animationDuration delay:0 options:animationOptions animations:^{
             if (transform != nil)
@@ -212,16 +219,16 @@
                 [proxy.view setTransform_:transform];
             }
             
-            if (top != nil || left != nil || bottom != nil || right != nil || width != nil || height != nil)
+            if (!TiDimensionIsUndefined(top) || !TiDimensionIsUndefined(left) || !TiDimensionIsUndefined(bottom) || !TiDimensionIsUndefined(right) || !TiDimensionIsUndefined(width) || !TiDimensionIsUndefined(height))
             {
                 LayoutConstraint *layoutProperties = [proxy layoutProperties];
                 
-                ENSURE_LAYOUT_PROPERTY(left);
-                ENSURE_LAYOUT_PROPERTY(right);
-                ENSURE_LAYOUT_PROPERTY(top);
-                ENSURE_LAYOUT_PROPERTY(bottom);
-                ENSURE_LAYOUT_PROPERTY(width);
-                ENSURE_LAYOUT_PROPERTY(height);
+                if (!TiDimensionIsUndefined(top)) layoutProperties->top = top;
+                if (!TiDimensionIsUndefined(left)) layoutProperties->left = left;
+                if (!TiDimensionIsUndefined(bottom)) layoutProperties->bottom = bottom;
+                if (!TiDimensionIsUndefined(right)) layoutProperties->right = right;
+                if (!TiDimensionIsUndefined(width)) layoutProperties->width = width;
+                if (!TiDimensionIsUndefined(height)) layoutProperties->height = height;
                 
                 object_setInstanceVariable(proxy, "_layoutProperties", &layoutProperties);
                 

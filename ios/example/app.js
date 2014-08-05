@@ -37,7 +37,7 @@
         easeSelectView = Ti.UI.createView({
             height : 100,
             bottom : 0,
-            backgroundColor : 'white'
+            clipMode : Ti.UI.iOS.CLIP_MODE_ENABLED
         });
 
     easeSelect.add([
@@ -82,19 +82,19 @@
         Animator.animate(viewToAnimate, {
             rotate : 180,
             backgroundColor : 'green',
-            top : Ti.Platform.displayCaps.platformHeight - 199,
-            width : "50%",
+            top : (Ti.Platform.displayCaps.platformHeight - 199) + 'dp',
+            width : '50%',
             opacity : 0.5,
-            duration : 500,
+            duration : 3000,
             easing : easingMethod
         }, function () {
             Animator.animate(viewToAnimate, {
                 rotate : 180,
                 backgroundColor : 'red',
                 top : 0,
-                width : null,
+                width : Ti.UI.FILL,
                 opacity : 1,
-                duration : 500,
+                duration : 3000,
                 easing : easingMethod
             });
         });

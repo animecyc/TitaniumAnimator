@@ -65,7 +65,11 @@ NS_ENUM(NSInteger, AnimationEasingType)
 
 typedef void (^ CallbackBlock)(void);
 
-#define ENSURE_LAYOUT_PROPERTY(prop) { if (prop && layoutProperties) layoutProperties->prop = TiDimensionFromObject(prop); }
+#define ENSURE_LAYOUT_PROPERTY(prop) {\
+    if (prop && layoutProperties) {\
+        layoutProperties->prop = TiDimensionFromObject(prop);\
+    }\
+}
 
 - (void)animateUsingProxy:(TiViewProxy*)proxy andProperties:(NSDictionary*)properties completed:(KrollCallback*)completed;
 
