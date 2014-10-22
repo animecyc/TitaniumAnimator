@@ -8,7 +8,7 @@
 
 #import <UIKit/UIKit.h>
 
-typedef float (*ViewEasingFunctionPointerType)(float);
+typedef CGFloat (*ViewEasingFunctionPointerType)(CGFloat);
 
 /**
  Allows to assign custom [easing functions](http://easings.net/) to the animatable `UIView` properties.
@@ -18,7 +18,7 @@ typedef float (*ViewEasingFunctionPointerType)(float);
  */
 @interface UIView (Easing)
 
-/** 
+/**
  Assigns an easing function to an animatable `UIView` property.
  
  The function remains assigned and in effect until removed using `removeEasingFunctionForKeyPath:`.
@@ -34,13 +34,13 @@ typedef float (*ViewEasingFunctionPointerType)(float);
  */
 - (void)setEasingFunction:(ViewEasingFunctionPointerType)function forKeyPath:(NSString *)keyPath;
 
-/** 
+/**
  Disassociates a previously assigned easing function from a `UIView` property.
  
  @param keyPath The key-path of the property to remove a previously assigned easing function from.
  
  @see -setEasingFunction:forKeyPath:
-
+ 
  */
 - (void)removeEasingFunctionForKeyPath:(NSString *)keyPath;
 

@@ -118,7 +118,6 @@
                           {
                               TiViewProxy *sibling = (TiViewProxy *)obj;
                               
-                              [sibling.view setClipsToBounds:YES];
                               [sibling.view removeEasingFunctionForKeyPath:@"frame"];
                           }];
                      }
@@ -127,7 +126,6 @@
                       {
                           TiViewProxy *sibling = (TiViewProxy *)obj;
                           
-                          [sibling.view setClipsToBounds:YES];
                           [sibling.view removeEasingFunctionForKeyPath:@"frame"];
                       }];
                      
@@ -137,7 +135,7 @@
                           
                           if (! [sibling isAnimating])
                           {
-                              [sibling.view setEasingFunction:easingFunc forKeyPath:@"frame"];
+                              [sibling.view removeEasingFunctionForKeyPath:@"frame"];
                           }
                       }];
                      
@@ -149,10 +147,8 @@
                          [[scrollView wrapperView] removeEasingFunctionForKeyPath:@"frame"];
                      }
                  }
-                 else
-                 {
-                     [proxy.view removeEasingFunctionForKeyPath:@"frame"];
-                 }
+                 
+                 [proxy.view removeEasingFunctionForKeyPath:@"frame"];
                  
                  if (!TiDimensionIsUndefined(top)) [proxy replaceValue:[properties objectForKey:@"top"] forKey:@"top" notification:NO];
                  if (!TiDimensionIsUndefined(left)) [proxy replaceValue:[properties objectForKey:@"left"] forKey:@"left" notification:NO];
@@ -168,8 +164,7 @@
              
              [proxy.view setOpaque:originalOpaque];
              [proxy setAnimating:NO];
-             
-             if (callback != nil) [proxy _fireEventToListener:@"animated" withObject:nil listener:callback thisObject:proxy];
+             [proxy fireEvent:@"animated" withObject:nil];
          }];
         
         if (rotate != nil)
@@ -257,7 +252,6 @@
                              {
                                  TiViewProxy *sibling = (TiViewProxy *)obj;
                                  
-                                 [sibling.view setClipsToBounds:NO];
                                  [sibling.view setEasingFunction:easingFunc forKeyPath:@"frame"];
                              }];
                         }
@@ -266,7 +260,6 @@
                          {
                              TiViewProxy *sibling = (TiViewProxy *)obj;
                              
-                             [sibling.view setClipsToBounds:NO];
                              [sibling.view setEasingFunction:easingFunc forKeyPath:@"frame"];
                          }];
                         
