@@ -1,4 +1,4 @@
-TITANIUM_SDK_VERSION = 3.4.0.GA
+TITANIUM_SDK_VERSION = 3.5.0.GA
 
 TITANIUM_SDK = ~/Library/Application Support/Titanium/mobilesdk/osx/$(TITANIUM_SDK_VERSION)
 TITANIUM_BASE_SDK = "$(TITANIUM_SDK)/iphone/include"
