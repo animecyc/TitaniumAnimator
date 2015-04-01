@@ -1,8 +1,19 @@
-xcuserdata/
-tmp/
-bin/
+# Global
+
 build/
-.settings/
-android/dist/
+tmp/
 *.zip
+
+# iOS
+
+xcuserdata/
 *.xccheckout
+
+# Android
+
+android/dist/
+android/build-local.properties
+android/libs
+
+!android/build/docs/
+!android/libs/.gitkeep
