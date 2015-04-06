@@ -87,7 +87,11 @@
     double animationDelay = delay > 0 ? ([delay doubleValue] / 1000) : 0;
     double animationDuration = ([duration doubleValue] / 1000);
     
-    __block KrollCallback *callback_ = [callback retain];
+//    __block KrollCallback *callback_ = [callback retain];
+  
+    NSString *animationGUID = [[NSUUID UUID] UUIDString];
+  
+    [proxy replaceValue:callback forKey:animationGUID notification:NO];
 
     // Given the above setting `opaque` to YES
     // can give us a more performant animation
@@ -166,11 +170,8 @@
 
              [proxy.view setOpaque:originalOpaque];
              [proxy setAnimating:NO];
-             
-             if(callback_ != nil && ![callback_ isKindOfClass:[NSNull class]])
-             {
-                 [callback_ call:nil thisObject:nil];
-             }
+             [proxy fireCallback:animationGUID withArg:nil withSource:proxy];
+             [proxy replaceValue:nil forKey:animationGUID notification:NO];
          }];
 
         if (rotate != nil)
