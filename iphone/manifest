@@ -1,0 +1,13 @@
+version: 2.0.0
+apiversion: 2
+architectures: armv7 arm64 i386 x86_64
+description: A replacement for Titanium's view animations.
+author: Seth Benjamin
+license: MIT
+copyright: Copyright (c) 2015 Seth Benjamin
+
+name: TiAnimator
+moduleid: com.animecyc.animator
+guid: 8d4800af-8a8e-4c54-92f6-add4e25dffcb
+platform: iphone
+minsdk: 4.0.0.GA

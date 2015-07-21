@@ -1,0 +1,2 @@
+OTHER_LDFLAGS=$(inherited) -lc++
+OTHER_CFLAGS=$(inherited)

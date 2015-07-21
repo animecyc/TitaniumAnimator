@@ -1,0 +1,6 @@
+build/
+xcuserdata/
+android/dist/
+harness/modules/
+*.xcworkspace
+*.zip
